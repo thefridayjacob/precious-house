@@ -3574,33 +3574,45 @@ function applyRoleRestrictions(role) {
 
 // ── NAVIGATION ──
 function showPage(name, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // Update nav immediately (visible feedback — fixes INP)
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const pg = document.getElementById('page-' + name);
-  if (pg) pg.classList.add('active');
   if (btn) btn.classList.add('active');
-  const inits = { checkin: initCheckin, reports: loadReports, departments: initDepartments, settings: initSettings, birthdays: initBirthdays, registration: initRegistration, comms: initComms };
-  if (inits[name]) inits[name]();
-  const titles = {
-    members: ['Members', 'All registered members'],
-    departments: ['Departments', 'Manage church units'],
-    checkin: ['Attendance', 'Mark attendance for any meeting'],
-    reports: ['Reports', 'Attendance insights'],
-    settings: ['Settings', 'Admin, roles & security'],
-    birthdays: ['Birthdays', 'Upcoming member birthdays'],
-    registration: ['Self-Registration', 'Member registration link & approvals'],
-    comms: ['Communications', 'Bulk messaging, follow-ups & weekly reports'],
-  };
-  const [title, sub] = titles[name] || ['', ''];
-  document.getElementById('pageTitle').textContent = title;
-  document.getElementById('pageSubtitle').textContent = sub;
-  const actions = document.getElementById('topbarActions');
-  if (name === 'members') {
-    actions.innerHTML = `<button class="btn btn-ghost" onclick="exportMembers()">⬇ Export</button><button class="btn btn-primary" onclick="openAddModal()">+ Add Member</button>`;
-  } else if (name === 'departments') {
-    actions.innerHTML = `<button class="btn btn-primary" onclick="openDeptModal()">+ New Department</button>`;
-  } else { actions.innerHTML = ''; }
-  if (window.innerWidth <= 768) closeSidebar();
+
+  // Defer heavy DOM work to next frame
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const pg = document.getElementById('page-' + name);
+    if (pg) pg.classList.add('active');
+
+    const titles = {
+      members: ['Members', 'All registered members'],
+      departments: ['Departments', 'Manage church units'],
+      checkin: ['Attendance', 'Mark attendance for any meeting'],
+      reports: ['Reports', 'Attendance insights'],
+      settings: ['Settings', 'Admin, roles & security'],
+      birthdays: ['Birthdays', 'Upcoming member birthdays'],
+      registration: ['Self-Registration', 'Member registration link & approvals'],
+      comms: ['Communications', 'Bulk messaging, follow-ups & weekly reports'],
+    };
+    const [title, sub] = titles[name] || ['', ''];
+    document.getElementById('pageTitle').textContent = title;
+    document.getElementById('pageSubtitle').textContent = sub;
+
+    const actions = document.getElementById('topbarActions');
+    if (name === 'members') {
+      actions.innerHTML = `<button class="btn btn-ghost" onclick="exportMembers()">⬇ Export</button><button class="btn btn-primary" onclick="openAddModal()">+ Add Member</button>`;
+    } else if (name === 'departments') {
+      actions.innerHTML = `<button class="btn btn-primary" onclick="openDeptModal()">+ New Department</button>`;
+    } else {
+      actions.innerHTML = '';
+    }
+
+    if (window.innerWidth <= 768) closeSidebar();
+
+    // Init page content slightly deferred so page transition paints first
+    const inits = { checkin: initCheckin, reports: loadReports, departments: initDepartments, settings: initSettings, birthdays: initBirthdays, registration: initRegistration, comms: initComms };
+    if (inits[name]) setTimeout(() => inits[name](), 50);
+  });
 }
 
 function toggleSidebar() {
@@ -3884,10 +3896,22 @@ function viewProfile(id) {
 }
 
 async function deleteMember(id,name,evt) {
-  if(evt)evt.stopPropagation();
-  if(!confirm(`Remove ${name}?\nThis cannot be undone.`))return;
-  try{const{error}=await db.from('members').delete().eq('id',id);if(error)throw error;showToast(`${name} removed`,'success');logActivity(`Member "${name}" deleted`,'danger');closeModal('profileModal');loadMembers();}
-  catch(err){showToast('Error: '+err.message,'error');}
+  if(evt){evt.stopPropagation();evt.preventDefault();}
+  // Defer confirm to next frame so browser can paint first (fixes INP)
+  await new Promise(r => setTimeout(r, 0));
+  if(!confirm(`Remove ${name}?\nThis cannot be undone.`)) return;
+  showToast('Removing...', 'info');
+  await new Promise(r => setTimeout(r, 0)); // yield before network call
+  try {
+    const{error}=await db.from('members').delete().eq('id',id);
+    if(error) throw error;
+    showToast(`${name} removed`,'success');
+    logActivity(`Member "${name}" deleted`,'danger');
+    closeModal('profileModal');
+    await loadMembers();
+  } catch(err) {
+    showToast('Error: '+err.message,'error');
+  }
 }
 
 
