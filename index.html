@@ -3494,18 +3494,56 @@ async function doLogin() {
   }
   applyRoleRestrictions(currentUser.role);
   logActivity((currentUser.displayName || currentUser.username) + ' logged in', 'info');
+  // Persist session across refreshes
+  sessionStorage.setItem('tph_session', JSON.stringify(currentUser));
   loadMembers();
-  checkRegLink();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
   document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
   document.querySelectorAll('.modal-backdrop').forEach(b => b.addEventListener('click', e => { if (e.target === b) closeModal(b.id); }));
+
+  // ── Check for registration link BEFORE login ──
+  if (window.location.search.includes('register=1')) {
+    // Hide login, show self-reg form directly — no password needed
+    document.getElementById('loginScreen').style.display = 'none';
+    const cn = appSettings.churchName || 'The Precious House';
+    const scn = document.getElementById('selfRegChurchName');
+    const scs = document.getElementById('selfRegSuccessChurch');
+    if (scn) scn.textContent = cn;
+    if (scs) scs.textContent = cn;
+    document.getElementById('selfRegPage').classList.add('open');
+    return; // Don't restore session either
+  }
+
+  // ── Session persistence: restore login after refresh ──
+  const savedSession = sessionStorage.getItem('tph_session');
+  if (savedSession) {
+    try {
+      const session = JSON.parse(savedSession);
+      currentUser = session;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      document.getElementById('adminName').textContent = currentUser.displayName || currentUser.username;
+      document.getElementById('adminAvatar').textContent = (currentUser.displayName || currentUser.username)[0].toUpperCase();
+      const roleLabels = { admin: 'Super Admin', volunteer: 'Volunteer', followup: 'Follow-up Team' };
+      document.getElementById('adminRoleLabel').textContent = roleLabels[currentUser.role] || 'User';
+      if (appSettings.churchName) {
+        document.querySelector('.sidebar-brand .brand-name').textContent = appSettings.churchName;
+        document.title = appSettings.churchName + ' — Attendance';
+      }
+      applyRoleRestrictions(currentUser.role);
+      loadMembers();
+    } catch(e) {
+      sessionStorage.removeItem('tph_session');
+    }
+  }
 });
 
 function doLogout() {
   logActivity((currentUser?.username || 'admin') + ' logged out', 'info');
+  sessionStorage.removeItem('tph_session');
   currentUser = null;
   document.getElementById('app').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
@@ -4392,7 +4430,7 @@ async function approvePending(id){
 }
 function rejectPending(id){if(!confirm('Reject this registration?'))return;const pending=JSON.parse(localStorage.getItem('tph_pending_reg')||'[]');localStorage.setItem('tph_pending_reg',JSON.stringify(pending.map(r=>r.id===id?{...r,status:'rejected'}:r)));loadPendingRegistrations();showToast('Registration rejected','info');}
 async function approveAllPending(){const pending=JSON.parse(localStorage.getItem('tph_pending_reg')||'[]').filter(r=>r.status==='pending');if(!pending.length){showToast('No pending registrations','info');return;}if(!confirm(`Approve all ${pending.length}?`))return;for(const reg of pending)await approvePending(reg.id);}
-function checkRegLink(){if(window.location.search.includes('register=1')){setTimeout(()=>{document.getElementById('loginScreen').style.display='none';const cn=appSettings.churchName||'The Precious House';document.getElementById('selfRegChurchName').textContent=cn;document.getElementById('selfRegSuccessChurch').textContent=cn;document.getElementById('selfRegPage').classList.add('open');},100);}}
+// checkRegLink handled in DOMContentLoaded
 
 // ══════════════════════════════════════════
 // PHASE 6 — COMMUNICATIONS
