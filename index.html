@@ -1371,9 +1371,9 @@ video { width: 100%; display: block; }
   font-family: 'Lexend', sans-serif;
   font-size: 2rem; font-weight: 700;
   line-height: 1;
-  color: var(--ink);
+  color: var(--navy);
 }
-.rstat-label { font-size: 0.68rem; color: var(--warm-gray); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
+.rstat-label { font-size: 0.68rem; color: var(--navy); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
 .rstat-sub { font-size: 0.72rem; color: var(--navy); margin-top: 3px; font-weight: 500; }
 
 /* Consistency list */
@@ -2671,7 +2671,7 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
           <div class="rstat">
             <div class="rstat-num" id="rAvgAttendance">—</div>
             <div class="rstat-label">Avg Attendance</div>
-            <div class="rstat-sub" id="rAvgPct">per Sunday</div>
+            <div class="rstat-sub" id="rAvgPct">per meeting</div>
           </div>
           <div class="rstat">
             <div class="rstat-num" id="rPerfectCount">—</div>
@@ -2889,8 +2889,8 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
           <div class="comms-card">
             <div class="comms-card-header">
               <div>
-                <div class="comms-card-title">💬 Bulk Department Message</div>
-                <div class="comms-card-sub">Send a WhatsApp message to an entire department</div>
+                <div class="comms-card-title">💬 Department Message</div>
+                <div class="comms-card-sub">Opens individual WhatsApp chats — one per member (WhatsApp limitation)</div>
               </div>
             </div>
             <div class="comms-card-body">
@@ -2931,7 +2931,7 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
           <div class="comms-card">
             <div class="comms-card-header">
               <div>
-                <div class="comms-card-title">🚨 Follow-up Message Templates</div>
+                <div class="comms-card-title">🚨 Follow-up Messages</div>
                 <div class="comms-card-sub">Quick WhatsApp to absent members</div>
               </div>
             </div>
@@ -2981,7 +2981,7 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
           <div class="comms-card">
             <div class="comms-card-header">
               <div>
-                <div class="comms-card-title">📋 Monday Absent Report</div>
+                <div class="comms-card-title">📋 Weekly Attendance Report</div>
                 <div class="comms-card-sub">Weekly summary ready to copy and share</div>
               </div>
               <button class="rc-action" onclick="generateMondayReport()">↻ Refresh</button>
@@ -2991,9 +2991,6 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
                 <label class="form-label">Report For</label>
                 <select class="form-select" id="mondayReportSession">
                   <option value="">All Sessions</option>
-                  <option value="Sunday School">Sunday School</option>
-                  <option value="1st Service">1st Service</option>
-                  <option value="2nd Service">2nd Service</option>
                 </select>
               </div>
               <div class="monday-report-preview" id="mondayReportPreview">Click "Refresh" to generate this week's report.</div>
@@ -4248,7 +4245,20 @@ function switchReportTab(name, btn) {
   if(br)br.style.display=name==='browse'?'block':'none';
   document.querySelectorAll('#page-reports .settings-nav-btn').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  if(name==='browse'){populateBrowseSessionFilter();const today=new Date().toISOString().split('T')[0];const picker=document.getElementById('browseDatePicker');if(picker&&!picker.value){picker.value=today;loadBrowseDate(today);}}
+  if(name==='browse'){
+    // Ensure members are loaded first
+    if(!allMembers.length) loadMembers().then(()=>{ _initBrowse(); });
+    else _initBrowse();
+  }
+}
+function _initBrowse(){
+  populateBrowseSessionFilter();
+  const today=new Date().toISOString().split('T')[0];
+  const picker=document.getElementById('browseDatePicker');
+  if(picker){
+    if(!picker.value) picker.value=today;
+    loadBrowseDate(picker.value);
+  }
 }
 
 function populateBrowseSessionFilter(sessions){
@@ -4281,30 +4291,43 @@ function renderBrowseDate(dateStr){
   const activeMembers=allMembers.filter(m=>m.is_active);
   const presentMembers=activeMembers.filter(m=>presentIds.has(m.id));
   const absentMembers=activeMembers.filter(m=>!presentIds.has(m.id));
-  const males=presentMembers.filter(m=>m.gender==='Male').length,females=presentMembers.filter(m=>m.gender==='Female').length;
+  const males=presentMembers.filter(m=>m.gender==='Male'&&m.member_category!=='Child').length;
+  const females=presentMembers.filter(m=>m.gender==='Female'&&m.member_category!=='Child').length;
   const children=presentMembers.filter(m=>m.member_category==='Child').length;
   const pct=activeMembers.length?Math.round(presentIds.size/activeMembers.length*100):0;
-  let html=`<div style="margin-bottom:20px"><div style="font-family:'Lexend',sans-serif;font-size:1.3rem;font-weight:600;margin-bottom:12px">${dateLabel}</div>
-    <div class="stats-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:8px">
-      <div class="stat-card"><div class="stat-label">Present</div><div class="stat-num" style="color:var(--present)">${presentIds.size}</div></div>
-      <div class="stat-card"><div class="stat-label">Absent</div><div class="stat-num" style="color:var(--danger)">${absentMembers.length}</div></div>
+  let html=`<div style="margin-bottom:20px">
+    <div style="font-family:'Lexend',sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:12px;color:var(--navy)">${dateLabel}</div>
+    <div class="stats-row" style="grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">
+      <div class="stat-card"><div class="stat-label">Present</div><div class="stat-num" style="color:var(--green)">${presentIds.size}</div></div>
+      <div class="stat-card"><div class="stat-label">Absent</div><div class="stat-num" style="color:var(--red)">${absentMembers.length}</div></div>
       <div class="stat-card"><div class="stat-label">Rate</div><div class="stat-num" style="color:var(--navy)">${pct}%</div></div>
       <div class="stat-card"><div class="stat-label">Sessions</div><div class="stat-num">${sessions.length}</div></div>
     </div>
-    <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:0">
-      <div class="stat-card"><div class="stat-label">Males Present</div><div class="stat-num" style="color:#4A7C8E">${males}</div></div>
-      <div class="stat-card"><div class="stat-label">Females Present</div><div class="stat-num" style="color:#8E4A7C">${females}</div></div>
-      <div class="stat-card"><div class="stat-label">Children Present</div><div class="stat-num" style="color:var(--navy)">${children}</div></div>
+    <div class="stats-row" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:0">
+      <div class="stat-card"><div class="stat-label">Men</div><div class="stat-num" style="color:#2563EB">${males}</div><div style="font-size:0.62rem;color:var(--muted);margin-top:2px">Male adults &amp; youth</div></div>
+      <div class="stat-card"><div class="stat-label">Women</div><div class="stat-num" style="color:#9333EA">${females}</div><div style="font-size:0.62rem;color:var(--muted);margin-top:2px">Female adults &amp; youth</div></div>
+      <div class="stat-card"><div class="stat-label">Children</div><div class="stat-num" style="color:var(--green)">${children}</div><div style="font-size:0.62rem;color:var(--muted);margin-top:2px">Boys &amp; girls</div></div>
     </div></div>`;
   sessions.forEach(session=>{
     const sr=filteredData.filter(r=>r.session===session),sp=new Set(sr.map(r=>r.member_id));
     const present=activeMembers.filter(m=>sp.has(m.id)),absent=activeMembers.filter(m=>!sp.has(m.id));
-    html+=`<div class="report-card" style="margin-bottom:16px"><div class="rc-header"><div><div class="rc-title">📋 ${session}</div><div class="rc-sub">${present.length} present · ${absent.length} absent</div></div></div><div class="rc-body">
-      <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--warm-gray);margin-bottom:8px">✅ Present (${present.length})</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">${present.map(m=>`<span style="background:var(--gold-faint);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:0.78rem">${m.full_name}</span>`).join('')||'<span style="color:var(--warm-gray);font-size:0.82rem">None</span>'}</div>
-      <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--warm-gray);margin-bottom:8px">🔴 Absent (${absent.length})</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">${absent.map(m=>`<span style="background:#FDF0F0;border:1px solid #F5D5D5;color:var(--danger);border-radius:20px;padding:3px 10px;font-size:0.78rem">${m.full_name}${m.phone?' · '+m.phone:''}</span>`).join('')||'<span style="color:var(--present);font-size:0.82rem">🎉 Everyone was present!</span>'}</div>
-    </div></div>`;
+    const sMen=present.filter(m=>m.gender==='Male'&&m.member_category!=='Child').length;
+    const sWomen=present.filter(m=>m.gender==='Female'&&m.member_category!=='Child').length;
+    const sChildren=present.filter(m=>m.member_category==='Child').length;
+    html+=`<div class="report-card" style="margin-bottom:16px">
+      <div class="rc-header">
+        <div>
+          <div class="rc-title">📋 ${session}</div>
+          <div class="rc-sub">${present.length} present · ${absent.length} absent · 👨 ${sMen} men · 👩 ${sWomen} women · 👧 ${sChildren} children</div>
+        </div>
+      </div>
+      <div class="rc-body">
+        <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--warm-gray);margin-bottom:8px">✅ Present (${present.length})</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">${present.map(m=>`<span style="background:var(--green-faint);border:1px solid rgba(13,92,53,0.15);border-radius:20px;padding:3px 10px;font-size:0.78rem">${m.full_name}</span>`).join('')||'<span style="color:var(--muted);font-size:0.82rem">None</span>'}</div>
+        <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--warm-gray);margin-bottom:8px">🔴 Absent (${absent.length})</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${absent.map(m=>`<span style="background:var(--red-pale);border:1px solid rgba(190,30,45,0.15);color:var(--red);border-radius:20px;padding:3px 10px;font-size:0.78rem">${m.full_name}${m.phone?' · '+m.phone:''}</span>`).join('')||'<span style="color:var(--green);font-size:0.82rem">🎉 Everyone was present!</span>'}</div>
+      </div>
+    </div>`;
   });
   el.innerHTML=html;
 }
@@ -4504,7 +4527,20 @@ function closeSelfRegForm(){document.getElementById('selfRegPage').classList.rem
 let bulkSelectedMembers=new Set(),followupSelectedMembers=new Set(),mondayReportText='';
 const DEFAULT_TEMPLATES={missed1:`Hi {name}! 🙏 We missed you at {church} this week. We hope all is well. Looking forward to seeing you soon! God bless. 🕊`,missed2:`Hi {name}! 💛 We've noticed you haven't been at {church} for {weeks} meetings and we genuinely miss you. Please know you're always welcome. God bless! 🙏`,missed3:`Dear {name}, we've been thinking about you at {church}. It's been {weeks} meetings since we last saw you and we truly miss your presence. Please feel free to reach out anytime. Shalom! 🕊🙏`,custom:``};
 
-function initComms(){loadBulkDeptFilter();loadFollowupTemplate();loadFollowupAbsentList();renderSendLog();generateMondayReport();}
+function initComms(){
+  loadBulkDeptFilter();
+  loadFollowupTemplate();
+  loadFollowupAbsentList();
+  renderSendLog();
+  populateReportSessionInComms();
+  generateMondayReport();
+}
+function populateReportSessionInComms(){
+  const sel=document.getElementById('mondayReportSession');if(!sel)return;
+  // Get sessions from meetingTypes (configured meetings)
+  const sessions=[...new Set(meetingTypes.filter(m=>m.active).map(m=>m.name))].sort();
+  sel.innerHTML='<option value="">All Sessions</option>'+sessions.map(s=>`<option value="${s}">${s}</option>`).join('');
+}
 function loadBulkDeptFilter(){const sel=document.getElementById('bulkDept');if(!sel)return;const depts=[...new Set(allMembers.map(m=>m.department).filter(Boolean))].sort();sel.innerHTML='<option value="">Choose department...</option>'+depts.map(d=>`<option value="${d}">${d}</option>`).join('');}
 function loadBulkRecipients(){
   const dept=document.getElementById('bulkDept').value,el=document.getElementById('bulkRecipientList');if(!el)return;bulkSelectedMembers=new Set();
@@ -4577,17 +4613,50 @@ function sendFollowupWhatsApp(){
   logSend('followup',`Follow-up messages to ${members.length} absent member${members.length!==1?'s':''}`);showToast(`Opening ${members.length} WhatsApp chats...`,'success');
 }
 async function generateMondayReport(){
-  const sessionFilter=document.getElementById('mondayReportSession')?.value||'';const el=document.getElementById('mondayReportPreview');if(!el)return;
-  const today=new Date(),daysSinceSun=today.getDay(),lastSunday=new Date(today);lastSunday.setDate(today.getDate()-(daysSinceSun===0?0:daysSinceSun));const lastSundayStr=lastSunday.toISOString().split('T')[0];
+  const sessionFilter=document.getElementById('mondayReportSession')?.value||'';
+  const dateInput=document.getElementById('mondayReportDate')?.value||'';
+  const el=document.getElementById('mondayReportPreview');if(!el)return;
+
+  // Use selected date or default to most recent meeting date
+  let reportDate = dateInput;
+  if (!reportDate) {
+    // Find most recent attendance date from DB
+    try {
+      const {data} = await db.from('attendance').select('date').order('date',{ascending:false}).limit(1);
+      reportDate = data?.[0]?.date || new Date().toISOString().split('T')[0];
+    } catch(e) { reportDate = new Date().toISOString().split('T')[0]; }
+    const di=document.getElementById('mondayReportDate');if(di)di.value=reportDate;
+  }
+
   try{
-    let query=db.from('attendance').select('*').eq('date',lastSundayStr);if(sessionFilter)query=query.eq('session',sessionFilter);const{data}=await query;const records=data||[];
-    const church=appSettings.churchName||'The Precious House';const dateLabel=lastSunday.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    const activeMembers=allMembers.filter(m=>m.is_active);const presentIds=new Set(records.map(r=>r.member_id));const absentMembers=activeMembers.filter(m=>!presentIds.has(m.id));const pct=activeMembers.length?Math.round(presentIds.size/activeMembers.length*100):0;
-    const sessions=[...new Set(records.map(r=>r.session))];const sessionLines=sessions.map(s=>{const count=new Set(records.filter(r=>r.session===s).map(r=>r.member_id)).size;return`  • ${s}: ${count} present`;}).join('\n');
-    const absentLines=absentMembers.slice(0,20).map(m=>`  • ${m.full_name}${m.phone?' — '+m.phone:''}`).join('\n');const moreAbsent=absentMembers.length>20?`\n  ...and ${absentMembers.length-20} more`:'';
-    const report=`📋 ${church.toUpperCase()}\nATTENDANCE REPORT\n${dateLabel}\n${'─'.repeat(35)}\n\n📊 SUMMARY\n  Total Active: ${activeMembers.length}\n  Present: ${presentIds.size} (${pct}%)\n  Absent: ${absentMembers.length}\n\n${sessionLines?`📍 BY SESSION\n${sessionLines}\n\n`:''}🔴 ABSENT (${absentMembers.length})\n${absentLines||'  None — full attendance!'}${moreAbsent}\n\n${absentMembers.length>0?`⚠ Follow-up needed this week.`:`✅ Excellent! Full attendance!`}\n\nGenerated by ${church} Attendance System`;
+    let query=db.from('attendance').select('*').eq('date',reportDate);
+    if(sessionFilter)query=query.eq('session',sessionFilter);
+    const{data}=await query;const records=data||[];
+    const church=appSettings.churchName||'The Precious House';
+    const d=new Date(reportDate+'T12:00:00');
+    const dateLabel=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const activeMembers=allMembers.filter(m=>m.is_active);
+    const presentIds=new Set(records.map(r=>r.member_id));
+    const presentMembers=activeMembers.filter(m=>presentIds.has(m.id));
+    const absentMembers=activeMembers.filter(m=>!presentIds.has(m.id));
+    const pct=activeMembers.length?Math.round(presentIds.size/activeMembers.length*100):0;
+    const men=presentMembers.filter(m=>m.gender==='Male'&&m.member_category!=='Child').length;
+    const women=presentMembers.filter(m=>m.gender==='Female'&&m.member_category!=='Child').length;
+    const children=presentMembers.filter(m=>m.member_category==='Child').length;
+    const sessions=[...new Set(records.map(r=>r.session))];
+    const sessionLines=sessions.map(s=>{
+      const sIds=new Set(records.filter(r=>r.session===s).map(r=>r.member_id));
+      const sMembers=activeMembers.filter(m=>sIds.has(m.id));
+      const sMen=sMembers.filter(m=>m.gender==='Male'&&m.member_category!=='Child').length;
+      const sWomen=sMembers.filter(m=>m.gender==='Female'&&m.member_category!=='Child').length;
+      const sChild=sMembers.filter(m=>m.member_category==='Child').length;
+      return`  • ${s}: ${sIds.size} present (👨 ${sMen} men · 👩 ${sWomen} women · 👧 ${sChild} children)`;
+    }).join('\n');
+    const absentLines=absentMembers.slice(0,20).map(m=>`  • ${m.full_name}${m.phone?' — '+m.phone:''}`).join('\n');
+    const moreAbsent=absentMembers.length>20?`\n  ...and ${absentMembers.length-20} more`:'';
+    const report=`📋 ${church.toUpperCase()}\nATTENDANCE REPORT — ${dateLabel}\n${'─'.repeat(40)}\n\n📊 SUMMARY\n  Total Active: ${activeMembers.length}\n  Present:      ${presentIds.size} (${pct}%)\n  Absent:       ${absentMembers.length}\n\n👥 DEMOGRAPHICS (Present)\n  👨 Men:      ${men}\n  👩 Women:    ${women}\n  👧 Children: ${children}\n\n${sessionLines?`📍 BY SESSION\n${sessionLines}\n\n`:''}🔴 ABSENT (${absentMembers.length})\n${absentLines||'  None — full attendance! 🎉'}${moreAbsent}\n\n${absentMembers.length>0?'⚠ Follow-up needed.':'✅ Excellent! Full attendance!'}\n\nGenerated by ${church} Attendance System`;
     mondayReportText=report;el.textContent=report;
-  }catch(e){el.textContent='Could not generate report. Make sure attendance was recorded.';}
+  }catch(e){el.textContent='Could not generate report. Make sure attendance was recorded for this date.';}
 }
 function copyMondayReport(){if(!mondayReportText){showToast('Generate the report first','error');return;}navigator.clipboard.writeText(mondayReportText).then(()=>showToast('Report copied','success')).catch(()=>showToast('Select and copy manually','info'));}
 function shareMondayReportWA(){if(!mondayReportText){showToast('Generate report first','error');return;}window.open(`https://wa.me/?text=${encodeURIComponent(mondayReportText)}`,'_blank');logSend('report','Monday report shared on WhatsApp');}
