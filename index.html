@@ -2044,28 +2044,266 @@ video { width: 100%; display: block; }
 .menu-toggle {
   display: none;
   position: fixed;
-  top: 14px; left: 14px;
-  z-index: 60;
-  background: var(--ink2);
+  top: 12px; left: 12px;
+  z-index: 210;
+  background: var(--navy);
   border: none;
   color: white;
-  width: 40px; height: 40px;
+  width: 38px; height: 38px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
+
+/* ════════════════════════════════════════
+   COMPREHENSIVE MOBILE RESPONSIVE SYSTEM
+   ════════════════════════════════════════ */
+
+/* ── Tablet (≤1024px) ── */
+@media (max-width: 1024px) {
+  .sidebar { width: 200px; }
+  .main { margin-left: 200px; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .checkin-shell { grid-template-columns: 1fr; }
+  .checkin-panel { position: static; }
+  .settings-grid { grid-template-columns: 180px 1fr; }
+}
+
+/* ── Mobile (≤768px) ── */
 @media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
+
+  /* Core layout */
+  .sidebar {
+    width: 280px;
+    transform: translateX(-100%);
+    z-index: 200;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+  }
   .sidebar.open { transform: translateX(0); }
   .main { margin-left: 0; }
   .menu-toggle { display: flex; }
-  .stats-row { grid-template-columns: 1fr 1fr; }
-  .form-grid { grid-template-columns: 1fr; }
-  .page-content { padding: 16px; padding-top: 70px; }
-  .topbar { padding: 16px; padding-left: 64px; }
+
+  /* Topbar */
+  .topbar {
+    padding: 12px 16px 12px 60px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-title { font-size: 1.1rem; }
+  .topbar-actions { gap: 6px; }
+  .topbar-actions .btn { padding: 6px 10px; font-size: 0.78rem; }
+  /* Hide Export button on mobile — keep only primary action */
+  .topbar-actions .btn-ghost:first-child { display: none; }
+
+  /* Page content */
+  .page-content { padding: 12px 12px 100px; padding-top: 12px; }
+
+  /* Stats grids */
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .stat-card { padding: 12px; }
+  .stat-num { font-size: 1.8rem; }
+  .stat-label { font-size: 0.65rem; }
+  .stat-icon { font-size: 1.1rem; right: 10px; top: 10px; }
+
+  /* Forms */
+  .form-grid { grid-template-columns: 1fr; gap: 10px; }
+  .form-grid .full { grid-column: 1; }
+  .form-input, .form-select { padding: 10px 12px; font-size: 0.9rem; }
+
+  /* Toolbar */
+  .toolbar { flex-wrap: wrap; gap: 8px; }
+  .search-wrap { min-width: 100%; }
+  .filter-select { flex: 1; min-width: 0; font-size: 0.82rem; }
+
+  /* Member table — card view on mobile */
+  .table-wrap { border-radius: 10px; overflow: hidden; }
+  .data-table thead { display: none; }
+  .data-table tbody tr {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .data-table tbody tr td {
+    border-bottom: none;
+    padding: 2px 0;
+    font-size: 0.84rem;
+  }
+  .data-table tbody tr td:first-child { font-size: 0.92rem; font-weight: 600; margin-bottom: 4px; }
+  .data-table tbody tr td:nth-child(2) { position: absolute; top: 14px; right: 44px; font-size: 0.7rem; }
+  .data-table tbody tr td:nth-child(n+3):not(:last-child) { color: var(--muted); font-size: 0.78rem; }
+  .data-table tbody tr td:last-child { position: absolute; top: 12px; right: 8px; }
+  .row-actions { opacity: 1; }
+  .member-cell { gap: 8px; }
+  .member-photo, .member-initials { width: 32px; height: 32px; font-size: 0.72rem; }
+  .pagination { padding: 10px 12px; }
+  .page-info { font-size: 0.72rem; }
+  .page-btn { width: 26px; height: 26px; font-size: 0.78rem; }
+
+  /* Modals — full screen on mobile */
+  .modal-backdrop { padding: 0; align-items: flex-end; }
+  .modal {
+    max-width: 100% !important;
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 20px 20px 0 0;
+  }
+  .modal-header { padding: 16px 20px 14px; }
+  .modal-body { padding: 16px 20px; }
+  .modal-footer { padding: 12px 20px 20px; flex-wrap: wrap; }
+  .modal-footer .btn { flex: 1; justify-content: center; }
+
+  /* Photo upload */
+  .photo-upload-area { flex-direction: column; align-items: center; text-align: center; }
+  .photo-btns { flex-direction: row; }
+
+  /* Check-in */
+  .checkin-shell { grid-template-columns: 1fr; gap: 14px; }
+  .checkin-panel { position: static; }
+  .checkin-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .checkin-card { padding: 10px; }
+  .cc-name { font-size: 0.78rem; }
+  .cc-dept { font-size: 0.67rem; }
+  .cc-photo, .cc-initials { width: 32px; height: 32px; font-size: 0.72rem; }
+  .session-bar { gap: 8px; }
+  .session-btn { padding: 6px 12px; font-size: 0.78rem; }
+
+  /* Check-in date/meeting bar — stack on mobile */
+  #page-checkin .session-bar { flex-direction: column; align-items: stretch; }
+  #page-checkin .session-bar > div { flex-direction: row; }
+  #page-checkin .session-bar > div:first-child { order: 2; }
+  #page-checkin .session-bar > div:nth-child(2) { order: 1; }
+  #page-checkin .session-bar .online-dot { display: none; }
+  #page-checkin .session-bar .offline-badge { align-self: flex-start; }
+
+  /* Panel stats */
+  .panel-stats { grid-template-columns: 1fr 1fr; }
+  .ps-num { font-size: 1.5rem; }
+  .absent-list { max-height: 160px; }
+
+  /* Reports */
+  .reports-grid { grid-template-columns: 1fr; gap: 14px; }
+  .report-stat-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .rstat-num { font-size: 1.6rem; }
+  .report-filter-bar { flex-direction: column; gap: 8px; }
+  .report-filter-bar select, .report-filter-bar input { width: 100%; }
+  .consistency-row { gap: 8px; }
+  .cr-bar-wrap { width: 60px; }
+  #consistencyTableWrap { overflow-x: auto; }
+  .data-table#consistencyTable thead { display: table-header-group; }
+  .data-table#consistencyTable tbody tr { display: table-row; }
+  .data-table#consistencyTable tbody tr td { display: table-cell; border-bottom: 1px solid var(--border); padding: 8px 10px; }
+
+  /* Report tab bar */
+  #page-reports > div:first-child { overflow-x: auto; white-space: nowrap; }
+
+  /* Departments */
+  .dept-cards-grid { grid-template-columns: 1fr; gap: 10px; }
+  .dStatTotal, .dStatAssigned, .dStatLargest, .dStatUnassigned { font-size: 1.6rem; }
+
+  /* Settings */
+  .settings-grid { grid-template-columns: 1fr; }
+  #page-settings > div:first-child { overflow-x: auto; }
+  .settings-card-body { padding: 14px; }
+  .settings-card-header { padding: 12px 14px; }
+
+  /* Birthdays */
+  .birthday-row { flex-wrap: wrap; gap: 8px; }
+  .bday-info { min-width: 0; flex: 1; }
+  .whatsapp-btn { font-size: 0.7rem; padding: 4px 8px; }
+  .birthday-header { font-size: 0.92rem; }
+
+  /* Communications */
+  .comms-grid { grid-template-columns: 1fr; gap: 14px; }
+  .comms-card-header { flex-direction: column; gap: 8px; align-items: flex-start; }
+  .reg-link-box { flex-direction: column; gap: 12px; }
+  .reg-link-actions { width: 100%; flex-direction: row; }
+
+  /* Sidebar overlay backdrop */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 199;
+    backdrop-filter: blur(2px);
+  }
+  .sidebar-backdrop.open { display: block; }
 }
+
+/* ── Small phones (≤380px) ── */
+@media (max-width: 380px) {
+  .checkin-grid { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .topbar-title { font-size: 1rem; }
+  .checkin-card { flex-direction: row; }
+  .modal-footer .btn { font-size: 0.8rem; padding: 8px; }
+  .pin-pad { max-width: 200px; }
+  .pin-key { padding: 12px; }
+  .vlock-pad { max-width: 200px; }
+  .vlock-key { padding: 12px; }
+}
+
+/* ── Landscape mobile ── */
+@media (max-width: 768px) and (orientation: landscape) {
+  .modal { max-height: 96vh; border-radius: 12px; }
+  .modal-backdrop { align-items: center; padding: 8px; }
+  .pin-modal-body { padding: 16px; }
+  .pin-dots { margin-bottom: 14px; }
+  .pin-pad { gap: 7px; }
+  .pin-key { padding: 10px; }
+}
+
+/* ── MOBILE BOTTOM NAV ── */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--navy3);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  z-index: 150;
+  padding: 8px 0 env(safe-area-inset-bottom, 8px);
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+}
+.mbn-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.45);
+  font-family: 'Lexend Deca', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 8px;
+  transition: all 0.15s;
+  letter-spacing: 0.02em;
+  min-width: 64px;
+}
+.mbn-btn svg { stroke: currentColor; transition: stroke 0.15s; }
+.mbn-btn.active {
+  color: #4ADE80;
+}
+.mbn-btn.active svg { stroke: #4ADE80; }
+.mbn-btn:active { opacity: 0.7; transform: scale(0.95); }
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav { display: flex; }
+  /* Push page content above bottom nav */
+  .page-content { padding-bottom: 80px; }
+  /* Hide the hamburger menu toggle when bottom nav is visible */
+  .menu-toggle { display: none; }
+  /* Topbar left padding back to normal since no hamburger */
+  .topbar { padding-left: 16px; }
+}
+
 </style>
 </head>
 <body>
@@ -2098,6 +2336,7 @@ video { width: 100%; display: block; }
 <!-- APP -->
 <div id="app">
   <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
 
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
@@ -2309,22 +2548,22 @@ video { width: 100%; display: block; }
       <!-- CHECK-IN PAGE -->
       <div class="page" id="page-checkin">
         <!-- Meeting selector bar -->
-        <div class="session-bar" style="flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px">
-          <!-- Date picker -->
-          <div style="display:flex;align-items:center;gap:8px">
-            <label style="font-size:0.78rem;color:var(--warm-gray);font-weight:500">Date</label>
-            <input type="date" id="checkinDatePicker" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'Lexend Deca',sans-serif;font-size:0.84rem;outline:none;background:white" onchange="onCheckinDateChange(this.value)">
+        <div style="margin-bottom:14px">
+          <!-- Row 1: Date + Status -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+            <input type="date" id="checkinDatePicker"
+              style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'Lexend Deca',sans-serif;font-size:0.84rem;outline:none;background:white;flex:1;min-width:150px"
+              onchange="onCheckinDateChange(this.value)">
+            <span class="online-dot" id="onlineDot" style="white-space:nowrap">Live</span>
+            <span class="offline-badge" id="offlineBadge">0 queued</span>
           </div>
-          <!-- Meeting dropdown -->
-          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:200px">
-            <label style="font-size:0.78rem;color:var(--warm-gray);font-weight:500;white-space:nowrap">Meeting</label>
+          <!-- Row 2: Meeting selector -->
+          <div style="display:flex;align-items:center;gap:8px">
             <select id="meetingSelect" class="filter-select" style="flex:1" onchange="onMeetingChange(this.value)">
               <option value="">Select meeting...</option>
             </select>
-            <button class="btn btn-ghost" style="padding:6px 10px;font-size:0.8rem;white-space:nowrap" onclick="openAddMeetingModal()" title="Add special meeting">+ Special</button>
+            <button class="btn btn-ghost" style="padding:7px 12px;font-size:0.8rem;white-space:nowrap;flex-shrink:0" onclick="openAddMeetingModal()">+ Special</button>
           </div>
-          <span class="online-dot" id="onlineDot">Live</span>
-          <span class="offline-badge" id="offlineBadge">0 queued</span>
         </div>
 
         <div class="checkin-shell">
@@ -3288,10 +3527,20 @@ function showPage(name, btn) {
   } else if (name === 'departments') {
     actions.innerHTML = `<button class="btn btn-primary" onclick="openDeptModal()">+ New Department</button>`;
   } else { actions.innerHTML = ''; }
-  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+  if (window.innerWidth <= 768) closeSidebar();
 }
 
-function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  sidebar.classList.toggle('open');
+  if (backdrop) backdrop.classList.toggle('open', sidebar.classList.contains('open'));
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  if (backdrop) backdrop.classList.remove('open');
+}
 
 // ── LOAD MEMBERS ──
 async function loadMembers() {
@@ -4394,6 +4643,13 @@ function exportBirthdays() {
   showToast('Birthday list exported to PDF', 'success');
 }
 
+
+function updateBottomNav(page) {
+  document.querySelectorAll('.mbn-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('mbn-' + page);
+  if (btn) btn.classList.add('active');
+}
+
 </script>
 
 
@@ -4544,6 +4800,27 @@ function exportBirthdays() {
     </div>
   </div>
 </div>
+
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-bottom-nav" id="mobileBottomNav">
+  <button class="mbn-btn active" id="mbn-members" onclick="showPage('members',this);updateBottomNav('members')">
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Members</span>
+  </button>
+  <button class="mbn-btn" id="mbn-checkin" onclick="showPage('checkin',this);updateBottomNav('checkin')">
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    <span>Attendance</span>
+  </button>
+  <button class="mbn-btn" id="mbn-reports" onclick="showPage('reports',this);updateBottomNav('reports')">
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span>Reports</span>
+  </button>
+  <button class="mbn-btn" id="mbn-more" onclick="toggleSidebar()">
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    <span>More</span>
+  </button>
+</nav>
 
 </body>
 </html>
