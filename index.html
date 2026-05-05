@@ -2625,6 +2625,20 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
                 <div class="ps-box"><div class="ps-num green" id="panelPresent">0</div><div class="ps-label">Present</div></div>
                 <div class="ps-box"><div class="ps-num red" id="panelAbsent">0</div><div class="ps-label">Absent</div></div>
               </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;padding:0 2px">
+                <div style="background:rgba(37,99,235,0.15);border-radius:8px;padding:8px 4px;text-align:center">
+                  <div style="font-family:'Lexend',sans-serif;font-size:1.1rem;font-weight:700;color:#60A5FA" id="panelMen">0</div>
+                  <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em">Men</div>
+                </div>
+                <div style="background:rgba(147,51,234,0.15);border-radius:8px;padding:8px 4px;text-align:center">
+                  <div style="font-family:'Lexend',sans-serif;font-size:1.1rem;font-weight:700;color:#C084FC" id="panelWomen">0</div>
+                  <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em">Women</div>
+                </div>
+                <div style="background:rgba(13,92,53,0.2);border-radius:8px;padding:8px 4px;text-align:center">
+                  <div style="font-family:'Lexend',sans-serif;font-size:1.1rem;font-weight:700;color:#4ADE80" id="panelChildren">0</div>
+                  <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em">Children</div>
+                </div>
+              </div>
             </div>
             <div class="panel-body">
               <div class="panel-section-title">Absent this session</div>
@@ -2987,13 +3001,19 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
               <button class="rc-action" onclick="generateMondayReport()">↻ Refresh</button>
             </div>
             <div class="comms-card-body">
-              <div class="form-group" style="margin-bottom:12px">
-                <label class="form-label">Report For</label>
-                <select class="form-select" id="mondayReportSession">
-                  <option value="">All Sessions</option>
-                </select>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+                <div style="flex:1;min-width:140px">
+                  <label class="form-label">Date</label>
+                  <input type="date" id="mondayReportDate" class="form-input" style="padding:9px 12px" onchange="generateMondayReport()">
+                </div>
+                <div style="flex:1;min-width:140px">
+                  <label class="form-label">Session</label>
+                  <select class="form-select" id="mondayReportSession" onchange="generateMondayReport()">
+                    <option value="">All Sessions</option>
+                  </select>
+                </div>
               </div>
-              <div class="monday-report-preview" id="mondayReportPreview">Click "Refresh" to generate this week's report.</div>
+              <div class="monday-report-preview" id="mondayReportPreview">Select a date above to generate the report.</div>
               <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
                 <button class="btn btn-ghost" style="font-size:0.82rem" onclick="copyMondayReport()">📋 Copy Report</button>
                 <button class="wa-send-btn" style="font-size:0.82rem;padding:8px 14px" onclick="shareMondayReportWA()">
@@ -4050,15 +4070,24 @@ function renderCheckinGrid() {
     const present=presentSet.has(m.id);
     const initials=m.full_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
     const photo=m.photo_url?`<img class="cc-photo" src="${m.photo_url}" onerror="this.outerHTML='<div class=\\'cc-initials\\'>${initials}</div>'">`:`<div class="cc-initials">${initials}</div>`;
-    return `<div class="checkin-card ${present?'present':''}" onclick="openPinModal('${m.id}')">${photo}<div class="cc-info"><div class="cc-name">${m.full_name}</div><div class="cc-dept">${m.department||'No dept'}</div><div class="cc-pin">${present?'✅ Present':m.pin_hash?'🔐 PIN set':'⚠ No PIN'}</div></div></div>`;
+    const isChild = m.member_category==='Child';
+    const pinStatus = present ? '✅ Present' : isChild ? '👆 Tap to mark' : m.pin_hash ? '🔐 PIN set' : '⚠ No PIN';
+    return `<div class="checkin-card ${present?'present':''}" onclick="openPinModal('${m.id}')">${photo}<div class="cc-info"><div class="cc-name">${m.full_name}</div><div class="cc-dept">${m.department||'No dept'}</div><div class="cc-pin">${pinStatus}</div></div></div>`;
   }).join('');
 }
 
 function renderPanel() {
   const active=allMembers.filter(m=>m.is_active);
-  document.getElementById('panelPresent').textContent=active.filter(m=>presentSet.has(m.id)).length;
-  document.getElementById('panelAbsent').textContent=active.filter(m=>!presentSet.has(m.id)).length;
+  const presentMembers=active.filter(m=>presentSet.has(m.id));
   const absentMembers=active.filter(m=>!presentSet.has(m.id)).sort((a,b)=>a.full_name.localeCompare(b.full_name));
+  document.getElementById('panelPresent').textContent=presentMembers.length;
+  document.getElementById('panelAbsent').textContent=absentMembers.length;
+  const men=presentMembers.filter(m=>m.gender==='Male'&&m.member_category!=='Child').length;
+  const women=presentMembers.filter(m=>m.gender==='Female'&&m.member_category!=='Child').length;
+  const children=presentMembers.filter(m=>m.member_category==='Child').length;
+  const pm=document.getElementById('panelMen'); if(pm)pm.textContent=men;
+  const pw=document.getElementById('panelWomen'); if(pw)pw.textContent=women;
+  const pc=document.getElementById('panelChildren'); if(pc)pc.textContent=children;
   const list=document.getElementById('absentList'); if(!list)return;
   list.innerHTML=absentMembers.length===0?'<p style="font-size:0.82rem;color:var(--warm-gray);text-align:center;padding:12px">Everyone is present! 🎉</p>':absentMembers.map(m=>`<div class="absent-row"><div class="absent-name">${m.full_name}</div><div class="absent-phone">${m.phone||''}</div></div>`).join('');
 }
@@ -4083,6 +4112,19 @@ let pinModalMemberId=null,pinValue='',pinMode='checkin';
 function openPinModal(memberId){
   if(!currentSession){showToast('Please select a meeting first','error');return;}
   const m=allMembers.find(x=>x.id===memberId);if(!m)return;
+
+  // Children: mark present directly — no PIN needed
+  if(m.member_category==='Child' && !presentSet.has(memberId)){
+    markPresent(memberId);
+    showToast(`${m.full_name} marked present ✓`,'success');
+    return;
+  }
+  // Already checked in
+  if(presentSet.has(memberId)){
+    showToast(`${m.full_name} is already checked in`,'info');
+    return;
+  }
+
   pinModalMemberId=memberId;pinValue='';
   const initials=m.full_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
   const photo=m.photo_url?`<img class="pin-photo" src="${m.photo_url}">`:`<div class="pin-initials">${initials}</div>`;
@@ -4251,14 +4293,32 @@ function switchReportTab(name, btn) {
     else _initBrowse();
   }
 }
-function _initBrowse(){
+async function _initBrowse(){
   populateBrowseSessionFilter();
-  const today=new Date().toISOString().split('T')[0];
   const picker=document.getElementById('browseDatePicker');
-  if(picker){
-    if(!picker.value) picker.value=today;
-    loadBrowseDate(picker.value);
-  }
+  if(!picker) return;
+
+  // If picker already has a value, just load that
+  if(picker.value){ loadBrowseDate(picker.value); return; }
+
+  // Try to find the most recent date that has attendance data
+  try {
+    const {data} = await db.from('attendance')
+      .select('date')
+      .order('date', {ascending: false})
+      .limit(1);
+    const mostRecent = data?.[0]?.date;
+    if(mostRecent){
+      picker.value = mostRecent;
+      loadBrowseDate(mostRecent);
+      return;
+    }
+  } catch(e){ console.warn('Could not fetch most recent date:', e); }
+
+  // Fallback: use today
+  const today = new Date().toISOString().split('T')[0];
+  picker.value = today;
+  loadBrowseDate(today);
 }
 
 function populateBrowseSessionFilter(sessions){
@@ -4613,50 +4673,108 @@ function sendFollowupWhatsApp(){
   logSend('followup',`Follow-up messages to ${members.length} absent member${members.length!==1?'s':''}`);showToast(`Opening ${members.length} WhatsApp chats...`,'success');
 }
 async function generateMondayReport(){
-  const sessionFilter=document.getElementById('mondayReportSession')?.value||'';
-  const dateInput=document.getElementById('mondayReportDate')?.value||'';
-  const el=document.getElementById('mondayReportPreview');if(!el)return;
+  const sessionFilter = document.getElementById('mondayReportSession')?.value || '';
+  const dateInput = document.getElementById('mondayReportDate')?.value || '';
+  const el = document.getElementById('mondayReportPreview');
+  if (!el) return;
 
-  // Use selected date or default to most recent meeting date
+  el.textContent = 'Generating...';
+
+  // Auto-find most recent date if none selected
   let reportDate = dateInput;
   if (!reportDate) {
-    // Find most recent attendance date from DB
     try {
       const {data} = await db.from('attendance').select('date').order('date',{ascending:false}).limit(1);
-      reportDate = data?.[0]?.date || new Date().toISOString().split('T')[0];
-    } catch(e) { reportDate = new Date().toISOString().split('T')[0]; }
-    const di=document.getElementById('mondayReportDate');if(di)di.value=reportDate;
+      reportDate = data?.[0]?.date;
+    } catch(e) {}
+    if (!reportDate) reportDate = new Date().toISOString().split('T')[0];
+    const di = document.getElementById('mondayReportDate');
+    if (di) di.value = reportDate;
   }
 
-  try{
-    let query=db.from('attendance').select('*').eq('date',reportDate);
-    if(sessionFilter)query=query.eq('session',sessionFilter);
-    const{data}=await query;const records=data||[];
-    const church=appSettings.churchName||'The Precious House';
-    const d=new Date(reportDate+'T12:00:00');
-    const dateLabel=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    const activeMembers=allMembers.filter(m=>m.is_active);
-    const presentIds=new Set(records.map(r=>r.member_id));
-    const presentMembers=activeMembers.filter(m=>presentIds.has(m.id));
-    const absentMembers=activeMembers.filter(m=>!presentIds.has(m.id));
-    const pct=activeMembers.length?Math.round(presentIds.size/activeMembers.length*100):0;
-    const men=presentMembers.filter(m=>m.gender==='Male'&&m.member_category!=='Child').length;
-    const women=presentMembers.filter(m=>m.gender==='Female'&&m.member_category!=='Child').length;
-    const children=presentMembers.filter(m=>m.member_category==='Child').length;
-    const sessions=[...new Set(records.map(r=>r.session))];
-    const sessionLines=sessions.map(s=>{
-      const sIds=new Set(records.filter(r=>r.session===s).map(r=>r.member_id));
-      const sMembers=activeMembers.filter(m=>sIds.has(m.id));
-      const sMen=sMembers.filter(m=>m.gender==='Male'&&m.member_category!=='Child').length;
-      const sWomen=sMembers.filter(m=>m.gender==='Female'&&m.member_category!=='Child').length;
-      const sChild=sMembers.filter(m=>m.member_category==='Child').length;
-      return`  • ${s}: ${sIds.size} present (👨 ${sMen} men · 👩 ${sWomen} women · 👧 ${sChild} children)`;
-    }).join('\n');
-    const absentLines=absentMembers.slice(0,20).map(m=>`  • ${m.full_name}${m.phone?' — '+m.phone:''}`).join('\n');
-    const moreAbsent=absentMembers.length>20?`\n  ...and ${absentMembers.length-20} more`:'';
-    const report=`📋 ${church.toUpperCase()}\nATTENDANCE REPORT — ${dateLabel}\n${'─'.repeat(40)}\n\n📊 SUMMARY\n  Total Active: ${activeMembers.length}\n  Present:      ${presentIds.size} (${pct}%)\n  Absent:       ${absentMembers.length}\n\n👥 DEMOGRAPHICS (Present)\n  👨 Men:      ${men}\n  👩 Women:    ${women}\n  👧 Children: ${children}\n\n${sessionLines?`📍 BY SESSION\n${sessionLines}\n\n`:''}🔴 ABSENT (${absentMembers.length})\n${absentLines||'  None — full attendance! 🎉'}${moreAbsent}\n\n${absentMembers.length>0?'⚠ Follow-up needed.':'✅ Excellent! Full attendance!'}\n\nGenerated by ${church} Attendance System`;
-    mondayReportText=report;el.textContent=report;
-  }catch(e){el.textContent='Could not generate report. Make sure attendance was recorded for this date.';}
+  try {
+    let query = db.from('attendance').select('*').eq('date', reportDate);
+    if (sessionFilter) query = query.eq('session', sessionFilter);
+    const {data, error} = await query;
+    if (error) throw error;
+    const records = data || [];
+
+    const church = appSettings.churchName || 'The Precious House';
+    const d = new Date(reportDate + 'T12:00:00');
+    const dateLabel = d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    const activeMembers = allMembers.filter(m => m.is_active);
+
+    // No attendance recorded for this day
+    if (!records.length) {
+      mondayReportText = '';
+      el.textContent = `No service recorded for ${dateLabel}.
+
+If attendance was taken, check that the date is correct.`;
+      return;
+    }
+
+    const sessions = [...new Set(records.map(r => r.session))].sort();
+    const allPresentIds = new Set(records.map(r => r.member_id));
+    const allPresentMembers = activeMembers.filter(m => allPresentIds.has(m.id));
+    const allAbsentMembers = activeMembers.filter(m => !allPresentIds.has(m.id));
+    const totalPct = activeMembers.length ? Math.round(allPresentIds.size / activeMembers.length * 100) : 0;
+
+    // Overall demographics
+    const totalMen = allPresentMembers.filter(m => m.gender==='Male' && m.member_category!=='Child').length;
+    const totalWomen = allPresentMembers.filter(m => m.gender==='Female' && m.member_category!=='Child').length;
+    const totalChildren = allPresentMembers.filter(m => m.member_category==='Child').length;
+
+    // Per-session breakdown
+    const sessionBlocks = sessions.map(s => {
+      const sIds = new Set(records.filter(r => r.session === s).map(r => r.member_id));
+      const sMembers = activeMembers.filter(m => sIds.has(m.id));
+      const sMen = sMembers.filter(m => m.gender==='Male' && m.member_category!=='Child').length;
+      const sWomen = sMembers.filter(m => m.gender==='Female' && m.member_category!=='Child').length;
+      const sChild = sMembers.filter(m => m.member_category==='Child').length;
+      const sAbsent = activeMembers.filter(m => !sIds.has(m.id));
+      const sPct = activeMembers.length ? Math.round(sIds.size / activeMembers.length * 100) : 0;
+      const absentLines = sAbsent.slice(0,15).map(m => `      • ${m.full_name}${m.phone ? ' — '+m.phone : ''}`).join('\n');
+      const more = sAbsent.length > 15 ? `\n      ...and ${sAbsent.length-15} more` : '';
+      return [
+        `  ┌─ ${s.toUpperCase()} ${'─'.repeat(Math.max(0,30-s.length))}`,
+        `  │  Present: ${sIds.size}/${activeMembers.length} (${sPct}%)`,
+        `  │  👨 Men: ${sMen}  👩 Women: ${sWomen}  👧 Children: ${sChild}`,
+        sAbsent.length > 0
+          ? `  │  🔴 Absent (${sAbsent.length}):\n${absentLines}${more}`
+          : `  │  ✅ Full attendance!`,
+        `  └${'─'.repeat(33)}`
+      ].join('\n');
+    }).join('\n\n');
+
+    const report = [
+      `📋 ${church.toUpperCase()}`,
+      `ATTENDANCE REPORT`,
+      `${dateLabel}`,
+      '═'.repeat(38),
+      '',
+      `📊 TOTAL SUMMARY`,
+      `  Active members: ${activeMembers.length}`,
+      `  Total present:  ${allPresentIds.size} (${totalPct}%)`,
+      `  Total absent:   ${allAbsentMembers.length}`,
+      '',
+      `👥 DEMOGRAPHICS`,
+      `  👨 Men:      ${totalMen}`,
+      `  👩 Women:    ${totalWomen}`,
+      `  👧 Children: ${totalChildren}`,
+      '',
+      `📍 BY SESSION (${sessions.length} session${sessions.length!==1?'s':''})`,
+      sessionBlocks,
+      '',
+      allAbsentMembers.length > 0 ? '⚠ Follow-up needed for absent members.' : '✅ Excellent — full attendance!',
+      '',
+      `Generated by ${church} Attendance System`
+    ].join('\n');
+
+    mondayReportText = report;
+    el.textContent = report;
+  } catch(e) {
+    el.textContent = 'Error generating report: ' + e.message;
+  }
 }
 function copyMondayReport(){if(!mondayReportText){showToast('Generate the report first','error');return;}navigator.clipboard.writeText(mondayReportText).then(()=>showToast('Report copied','success')).catch(()=>showToast('Select and copy manually','info'));}
 function shareMondayReportWA(){if(!mondayReportText){showToast('Generate report first','error');return;}window.open(`https://wa.me/?text=${encodeURIComponent(mondayReportText)}`,'_blank');logSend('report','Monday report shared on WhatsApp');}
