@@ -4410,57 +4410,80 @@ function copyRegLink(){const url=window.location.href.split('?')[0]+'?register=1
 function openSelfRegForm(){const cn=appSettings.churchName||'The Precious House';document.getElementById('selfRegChurchName').textContent=cn;document.getElementById('selfRegSuccessChurch').textContent=cn;document.getElementById('selfRegPage').classList.add('open');document.getElementById('selfRegFormBody').style.display='block';document.getElementById('selfRegSuccess').classList.remove('show');}
 function closeSelfRegForm(){document.getElementById('selfRegPage').classList.remove('open');}
 async function submitSelfReg(){
-  const name=document.getElementById('sr_name').value.trim(),phone=document.getElementById('sr_phone').value.trim();
-  if(!name){showToast('Full name required','error');return;}
-  if(!phone){showToast('Phone required','error');return;}
-  const pending={
-    id:Date.now().toString(),
-    full_name:name, phone,
-    email:document.getElementById('sr_email').value.trim()||null,
-    date_of_birth:document.getElementById('sr_dob').value||null,
-    gender:document.getElementById('sr_gender').value||null,
-    marital_status:document.getElementById('sr_marital').value||null,
-    address:document.getElementById('sr_address').value.trim()||null,
-    department:document.getElementById('sr_dept').value||null,
-    how_heard:document.getElementById('sr_source').value||null,
-    next_of_kin_name:document.getElementById('sr_kin_name').value.trim()||null,
-    next_of_kin_phone:document.getElementById('sr_kin_phone').value.trim()||null,
-    next_of_kin_relationship:document.getElementById('sr_kin_rel').value||null,
-    submitted_at:new Date().toISOString(),
-    status:'pending'
+  const name = document.getElementById('sr_name').value.trim();
+  const phone = document.getElementById('sr_phone').value.trim();
+  const pin = document.getElementById('sr_pin')?.value || '';
+  const pinConfirm = document.getElementById('sr_pin_confirm')?.value || '';
+
+  // Validation
+  if (!name) { showToast('Full name is required', 'error'); return; }
+  if (!phone) { showToast('Phone number is required', 'error'); return; }
+  if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+    showToast('Please set a 4-digit check-in PIN', 'error'); return;
+  }
+  if (pin !== pinConfirm) {
+    showToast('PINs do not match', 'error'); return;
+  }
+
+  const btn = document.querySelector('.self-reg-submit');
+  if (btn) { btn.textContent = 'Submitting...'; btn.disabled = true; }
+
+  // Hash the PIN
+  const pinHash = await hashPin(pin);
+
+  const payload = {
+    full_name: name,
+    phone,
+    email: document.getElementById('sr_email').value.trim() || null,
+    date_of_birth: document.getElementById('sr_dob').value || null,
+    gender: document.getElementById('sr_gender').value || null,
+    marital_status: document.getElementById('sr_marital').value || null,
+    address: document.getElementById('sr_address').value.trim() || null,
+    department: document.getElementById('sr_dept').value || null,
+    how_heard: document.getElementById('sr_source').value || null,
+    next_of_kin_name: document.getElementById('sr_kin_name').value.trim() || null,
+    next_of_kin_phone: document.getElementById('sr_kin_phone').value.trim() || null,
+    next_of_kin_relationship: document.getElementById('sr_kin_rel').value || null,
+    pin_hash: pinHash,
+    submitted_at: new Date().toISOString(),
+    status: 'pending'
   };
 
   let saved = false;
 
-  // Primary: save to Supabase so admin sees it on any device
+  // PRIMARY: Supabase — cross-device, any admin sees it
   try {
-    const { error } = await db.from('pending_registrations').insert([{
-      full_name: pending.full_name, phone: pending.phone,
-      email: pending.email, date_of_birth: pending.date_of_birth,
-      gender: pending.gender, marital_status: pending.marital_status,
-      address: pending.address, department: pending.department,
-      how_heard: pending.how_heard,
-      next_of_kin_name: pending.next_of_kin_name,
-      next_of_kin_phone: pending.next_of_kin_phone,
-      next_of_kin_relationship: pending.next_of_kin_relationship,
-      submitted_at: pending.submitted_at, status: 'pending'
-    }]);
-    if (!error) saved = true;
-  } catch(e) { console.warn('Supabase pending save failed:', e); }
+    const { error } = await db.from('pending_registrations').insert([payload]);
+    if (!error) {
+      saved = true;
+      console.log('Saved to Supabase successfully');
+    } else {
+      console.error('Supabase error:', error);
+    }
+  } catch(e) {
+    console.warn('Supabase save failed, trying localStorage:', e);
+  }
 
-  // Fallback: always save to localStorage too
-  try {
-    const queue = JSON.parse(localStorage.getItem('tph_pending_reg') || '[]');
-    queue.push(pending);
-    localStorage.setItem('tph_pending_reg', JSON.stringify(queue));
-    saved = true;
-  } catch(e) { console.warn('localStorage save failed:', e); }
+  // FALLBACK: localStorage (same device only)
+  if (!saved) {
+    try {
+      const queue = JSON.parse(localStorage.getItem('tph_pending_reg') || '[]');
+      queue.push({ ...payload, id: Date.now().toString() });
+      localStorage.setItem('tph_pending_reg', JSON.stringify(queue));
+      saved = true;
+      console.log('Saved to localStorage as fallback');
+    } catch(e) {
+      console.warn('localStorage save also failed:', e);
+    }
+  }
+
+  if (btn) { btn.textContent = 'Submit Registration →'; btn.disabled = false; }
 
   if (saved) {
     document.getElementById('selfRegFormBody').style.display = 'none';
     document.getElementById('selfRegSuccess').classList.add('show');
   } else {
-    showToast('Submission failed. Please check your connection and try again.', 'error');
+    showToast('Submission failed. Please check your internet connection and try again.', 'error');
   }
 }
 async function loadPendingRegistrations(){
@@ -4528,7 +4551,8 @@ async function approvePending(id){
     next_of_kin_relationship: reg.next_of_kin_relationship||null,
     date_joined: new Date().toISOString().split('T')[0],
     member_id: generateMemberId(), is_active: true,
-    member_type: 'Regular Member', member_category: reg.member_category||'Adult'
+    member_type: 'Regular Member', member_category: reg.member_category||'Adult',
+    pin_hash: reg.pin_hash||null  // carry over the PIN they set during registration
   };
 
   try {
@@ -4550,8 +4574,32 @@ async function approvePending(id){
     loadPendingRegistrations(); loadMembers();
   } catch(e) { showToast('Error: '+e.message, 'error'); }
 }
-function rejectPending(id){if(!confirm('Reject this registration?'))return;const pending=JSON.parse(localStorage.getItem('tph_pending_reg')||'[]');localStorage.setItem('tph_pending_reg',JSON.stringify(pending.map(r=>r.id===id?{...r,status:'rejected'}:r)));loadPendingRegistrations();showToast('Registration rejected','info');}
-async function approveAllPending(){const pending=JSON.parse(localStorage.getItem('tph_pending_reg')||'[]').filter(r=>r.status==='pending');if(!pending.length){showToast('No pending registrations','info');return;}if(!confirm(`Approve all ${pending.length}?`))return;for(const reg of pending)await approvePending(reg.id);}
+async function rejectPending(id){
+  if(!confirm('Reject this registration?'))return;
+  // Update Supabase
+  try { await db.from('pending_registrations').update({status:'rejected'}).eq('id',id); } catch(e){}
+  // Update localStorage
+  const local=JSON.parse(localStorage.getItem('tph_pending_reg')||'[]');
+  localStorage.setItem('tph_pending_reg',JSON.stringify(local.map(r=>(r.id===id||(r.full_name+'|'+r.phone)===id)?{...r,status:'rejected'}:r)));
+  loadPendingRegistrations();
+  showToast('Registration rejected','info');
+}
+async function approveAllPending(){
+  // Get pending from Supabase
+  let pending = [];
+  try {
+    const { data } = await db.from('pending_registrations').select('*').eq('status','pending');
+    if (data && data.length) pending = data;
+  } catch(e){}
+  // Also check localStorage
+  const local = JSON.parse(localStorage.getItem('tph_pending_reg')||'[]').filter(r=>r.status==='pending');
+  const supaKeys = new Set(pending.map(r=>r.full_name+'|'+r.phone));
+  local.forEach(r=>{ if(!supaKeys.has(r.full_name+'|'+r.phone)) pending.push(r); });
+  if(!pending.length){showToast('No pending registrations','info');return;}
+  if(!confirm(`Approve all ${pending.length} registration(s)?`))return;
+  for(const reg of pending) await approvePending(reg.id||reg.full_name+'|'+reg.phone);
+  showToast(`All ${pending.length} registrations approved`,'success');
+}
 // checkRegLink handled in DOMContentLoaded
 
 // ══════════════════════════════════════════
@@ -4889,6 +4937,21 @@ function updateBottomNav(page) {
           <div class="form-group"><label class="form-label">Next of Kin Phone</label><input class="form-input" id="sr_kin_phone" placeholder="08012345678" type="tel"></div>
           <div class="form-group full"><label class="form-label">Relationship</label>
             <select class="form-select" id="sr_kin_rel"><option value="">Select...</option><option>Spouse</option><option>Parent</option><option>Sibling</option><option>Child</option><option>Friend</option><option>Other</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="self-reg-card">
+        <div class="form-section-title" style="font-size:0.95rem">🔐 Check-in PIN</div>
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px">Choose a 4-digit PIN you'll use to mark your attendance every Sunday.</p>
+        <div class="form-grid" style="margin-top:0">
+          <div class="form-group">
+            <label class="form-label">4-Digit PIN *</label>
+            <input class="form-input pin-setup-input" id="sr_pin" type="password" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm PIN *</label>
+            <input class="form-input pin-setup-input" id="sr_pin_confirm" type="password" maxlength="4" placeholder="••••" inputmode="numeric" pattern="[0-9]*" required>
           </div>
         </div>
       </div>
