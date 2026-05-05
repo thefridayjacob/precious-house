@@ -4070,9 +4070,10 @@ function renderCheckinGrid() {
     const present=presentSet.has(m.id);
     const initials=m.full_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
     const photo=m.photo_url?`<img class="cc-photo" src="${m.photo_url}" onerror="this.outerHTML='<div class=\\'cc-initials\\'>${initials}</div>'">`:`<div class="cc-initials">${initials}</div>`;
-    const isChild = m.member_category==='Child';
+    const isChild = isChildMember(m);
     const pinStatus = present ? '✅ Present' : isChild ? '👆 Tap to mark' : m.pin_hash ? '🔐 PIN set' : '⚠ No PIN';
-    return `<div class="checkin-card ${present?'present':''}" onclick="openPinModal('${m.id}')">${photo}<div class="cc-info"><div class="cc-name">${m.full_name}</div><div class="cc-dept">${m.department||'No dept'}</div><div class="cc-pin">${pinStatus}</div></div></div>`;
+    const clickFn = (isChild && !present) ? `markChildPresent('${m.id}')` : `openPinModal('${m.id}')`;
+    return `<div class="checkin-card ${present?'present':''}" onclick="${clickFn}">${photo}<div class="cc-info"><div class="cc-name">${m.full_name}</div><div class="cc-dept">${m.department||'No dept'}</div><div class="cc-pin">${pinStatus}</div></div></div>`;
   }).join('');
 }
 
@@ -4109,16 +4110,16 @@ function saveSpecialMeeting(){
 
 // PIN check-in
 let pinModalMemberId=null,pinValue='',pinMode='checkin';
+async function markChildPresent(memberId){
+  if(!currentSession){showToast('Please select a meeting first','error');return;}
+  const m=allMembers.find(x=>x.id===memberId);if(!m)return;
+  if(presentSet.has(memberId)){showToast(`${m.full_name} is already present`,'info');return;}
+  await markPresent(memberId);
+}
+
 function openPinModal(memberId){
   if(!currentSession){showToast('Please select a meeting first','error');return;}
   const m=allMembers.find(x=>x.id===memberId);if(!m)return;
-
-  // Children: mark present directly — no PIN needed
-  if(m.member_category==='Child' && !presentSet.has(memberId)){
-    markPresent(memberId);
-    showToast(`${m.full_name} marked present ✓`,'success');
-    return;
-  }
   // Already checked in
   if(presentSet.has(memberId)){
     showToast(`${m.full_name} is already checked in`,'info');
@@ -4974,6 +4975,14 @@ function updateBottomNav(page) {
 // ══════════════════════════════════════════
 
 let supabaseOK = false;
+
+// Helper: returns true if member should be treated as a child (no PIN required)
+function isChildMember(m) {
+  if (!m) return false;
+  if (m.member_category === 'Child') return true;
+  const dept = (m.department || '').toLowerCase();
+  return dept.includes('child') || dept.includes('junior') || dept.includes('kids');
+}
 
 async function testSupabaseConnection() {
   try {
