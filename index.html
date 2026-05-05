@@ -2059,278 +2059,283 @@ video { width: 100%; display: block; }
 
 
 /* ════════════════════════════════════════
-   COMPREHENSIVE MOBILE RESPONSIVE SYSTEM
+   RESPONSIVE SYSTEM — FULL REBUILD
    ════════════════════════════════════════ */
 
-/* ── Tablet (≤1024px) ── */
+html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+
+/* ─── TABLET ≤ 1024px ─── */
 @media (max-width: 1024px) {
-  .sidebar { width: 200px; }
-  .main { margin-left: 200px; }
-  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .sidebar { width: 210px; }
+  .main { margin-left: 210px; }
   .checkin-shell { grid-template-columns: 1fr; }
   .checkin-panel { position: static; }
-  .settings-grid { grid-template-columns: 180px 1fr; }
+  .reports-grid { grid-template-columns: 1fr; }
+  .comms-grid { grid-template-columns: 1fr; }
 }
 
-/* ── Mobile (≤768px) ── */
+/* ─── MOBILE ≤ 768px ─── */
 @media (max-width: 768px) {
 
-  /* Core layout */
-  .sidebar {
-    width: 280px;
-    transform: translateX(-100%);
-    z-index: 200;
-    box-shadow: 4px 0 24px rgba(0,0,0,0.3);
-  }
+  /* SHELL */
+  .sidebar { width: 80vw; max-width: 300px; transform: translateX(-100%); z-index: 200; box-shadow: 6px 0 32px rgba(0,0,0,0.4); }
   .sidebar.open { transform: translateX(0); }
   .main { margin-left: 0; }
-  .menu-toggle { display: flex; }
-
-  /* Topbar */
-  .topbar {
-    padding: 10px 12px;
-    position: sticky; top: 0; z-index: 100;
-    border-bottom: 1px solid var(--border);
-  }
-  .topbar-title { font-size: 1.05rem; }
+  .menu-toggle { display: none; }
+  .topbar { padding: 10px 14px; position: sticky; top: 0; z-index: 100; gap: 8px; }
+  .topbar-title { font-size: 1rem; font-weight: 700; }
   .topbar-sub { display: none; }
-  .topbar-actions { gap: 6px; }
-  .topbar-actions .btn { padding: 7px 12px; font-size: 0.8rem; }
-  /* Hide Export/secondary buttons on mobile */
   .topbar-actions .btn-ghost { display: none; }
+  .topbar-actions .btn-primary { padding: 7px 14px; font-size: 0.82rem; }
+  .page-content { padding: 12px 12px 90px; }
 
-  /* Page content */
-  .page-content { padding: 12px 12px 100px; padding-top: 12px; }
+  /* SIDEBAR BACKDROP */
+  .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(10,12,40,0.6); backdrop-filter: blur(2px); z-index: 199; }
+  .sidebar-backdrop.open { display: block; }
 
-  /* Stats grids */
-  .stats-row { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
-  .stat-card { padding: 12px 10px; }
-  .stat-num { font-size: 1.7rem; }
-  .stat-label { font-size: 0.6rem; letter-spacing: 0.06em; line-height: 1.3; }
+  /* ── MEMBERS SCREEN ── */
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .stat-card { padding: 11px 10px; }
+  .stat-num { font-size: 1.6rem; line-height: 1; }
+  .stat-label { font-size: 0.59rem; letter-spacing: 0.05em; line-height: 1.3; }
   .stat-icon { display: none; }
 
-  /* Forms */
+  /* TOOLBAR */
+  .toolbar { flex-wrap: wrap; gap: 8px; }
+  .search-wrap { width: 100%; }
+  .filter-select { flex: 1; min-width: calc(32% - 4px); font-size: 0.79rem; padding: 8px 6px; }
+
+  /* MEMBER CARDS — horizontal stacked */
+  .table-wrap { border-radius: 12px; overflow: hidden; }
+  .data-table thead { display: none; }
+  .data-table tbody tr { display: block; border-bottom: 1px solid var(--border); }
+  .data-table tbody tr td { display: none; } /* hide all, JS renders cards */
+
+  /* PAGINATION */
+  .pagination { padding: 10px 14px; }
+  .page-info { font-size: 0.72rem; }
+  .page-btn { width: 28px; height: 28px; font-size: 0.78rem; }
+
+  /* MODALS — bottom sheet */
+  .modal-backdrop { padding: 0; align-items: flex-end; }
+  .modal { max-width: 100% !important; width: 100% !important; max-height: 92vh; border-radius: 20px 20px 0 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .modal-header { padding: 16px 18px 12px; position: sticky; top: 0; background: white; z-index: 1; border-bottom: 1px solid var(--border); }
+  .modal-title { font-size: 1.1rem; }
+  .modal-body { padding: 14px 18px; }
+  .modal-footer { padding: 12px 18px 22px; gap: 8px; }
+  .modal-footer .btn { flex: 1; min-width: 0; justify-content: center; font-size: 0.84rem; }
   .form-grid { grid-template-columns: 1fr; gap: 10px; }
   .form-grid .full { grid-column: 1; }
-  .form-input, .form-select { padding: 10px 12px; font-size: 0.9rem; }
+  .form-input, .form-select { padding: 11px 12px; font-size: 0.92rem; }
+  .form-label { font-size: 0.72rem; }
+  .form-section-title { font-size: 0.82rem; margin: 14px 0 8px; }
+  .photo-upload-area { flex-direction: column; align-items: center; text-align: center; gap: 12px; }
+  .photo-btns { flex-direction: row; gap: 8px; }
 
-  /* Toolbar */
-  .toolbar { flex-wrap: wrap; gap: 8px; }
-  .search-wrap { width: 100%; min-width: 100%; }
-  .filter-select { flex: 1; min-width: calc(33% - 6px); font-size: 0.8rem; padding: 8px 6px; }
-
-  /* Member table — card view on mobile */
-  .table-wrap { border-radius: 10px; overflow: hidden; }
-  .data-table thead { display: none; }
-  .data-table tbody tr {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-rows: auto auto auto;
-    padding: 12px;
-    border-bottom: 1px solid var(--border);
-    gap: 2px 8px;
-    cursor: pointer;
-  }
-  .data-table tbody tr:hover { background: rgba(26,31,94,0.03); }
-  .data-table tbody tr td { border-bottom: none; padding: 0; }
-  /* Member name+photo — full width row 1 */
-  .data-table tbody tr td:nth-child(1) { grid-column: 1; grid-row: 1; }
-  /* Member ID — right of row 1 */
-  .data-table tbody tr td:nth-child(2) { grid-column: 2; grid-row: 1; font-size: 0.68rem; color: var(--muted); display: flex; align-items: center; }
-  /* Phone — row 2 */
-  .data-table tbody tr td:nth-child(3) { grid-column: 1; grid-row: 2; font-size: 0.78rem; color: var(--muted); }
-  /* Department — inline after phone */
-  .data-table tbody tr td:nth-child(4) { grid-column: 2; grid-row: 2; font-size: 0.75rem; display: flex; align-items: center; justify-content: flex-end; }
-  /* Date joined — row 3 */
-  .data-table tbody tr td:nth-child(5) { grid-column: 1; grid-row: 3; font-size: 0.72rem; color: var(--muted); }
-  /* Status — row 3 right */
-  .data-table tbody tr td:nth-child(6) { grid-column: 2; grid-row: 3; display: flex; align-items: center; justify-content: flex-end; }
-  /* Actions — hidden on mobile (use card tap to open profile) */
-  .data-table tbody tr td:nth-child(7) { display: none; }
-  .row-actions { opacity: 1; }
-  .member-cell { gap: 8px; }
-  .member-photo, .member-initials { width: 30px; height: 30px; font-size: 0.68rem; }
-  .member-name-cell { font-size: 0.88rem; font-weight: 600; }
-  .member-id-cell { font-size: 0.7rem; }
-  .pagination { padding: 10px 12px; }
-  .page-info { font-size: 0.72rem; }
-  .page-btn { width: 28px; height: 28px; font-size: 0.8rem; }
-
-  /* Modals — full screen on mobile */
-  .modal-backdrop { padding: 0; align-items: flex-end; }
-  .modal {
-    max-width: 100% !important;
-    width: 100%;
-    max-height: 92vh;
-    border-radius: 20px 20px 0 0;
-  }
-  .modal-header { padding: 16px 20px 14px; }
-  .modal-body { padding: 16px 20px; }
-  .modal-footer { padding: 12px 20px 20px; flex-wrap: wrap; }
-  .modal-footer .btn { flex: 1; justify-content: center; }
-
-  /* Photo upload */
-  .photo-upload-area { flex-direction: column; align-items: center; text-align: center; }
-  .photo-btns { flex-direction: row; }
-
-  /* Check-in */
+  /* ── ATTENDANCE SCREEN ── */
   .checkin-shell { grid-template-columns: 1fr; gap: 12px; }
-  .checkin-panel { position: static; }
+  .checkin-panel { position: static; border-radius: 12px; }
   .checkin-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .checkin-card { padding: 10px 8px; gap: 8px; }
-  .cc-name { font-size: 0.76rem; font-weight: 600; }
-  .cc-dept { font-size: 0.64rem; }
-  .cc-pin { font-size: 0.62rem; }
-  .cc-photo, .cc-initials { width: 30px; height: 30px; font-size: 0.68rem; flex-shrink: 0; }
-  .panel-header { padding: 14px 16px; }
-  .panel-body { padding: 12px 16px; }
-  .absent-list { max-height: 140px; }
-
-  /* Check-in date/meeting bar — stack on mobile */
-  #page-checkin .session-bar { flex-direction: column; align-items: stretch; }
-  #page-checkin .session-bar > div { flex-direction: row; }
-  #page-checkin .session-bar > div:first-child { order: 2; }
-  #page-checkin .session-bar > div:nth-child(2) { order: 1; }
-  #page-checkin .session-bar .online-dot { display: none; }
-  #page-checkin .session-bar .offline-badge { align-self: flex-start; }
-
-  /* Panel stats */
-  .panel-stats { grid-template-columns: 1fr 1fr; }
+  .checkin-card { padding: 9px 8px; gap: 8px; flex-direction: row; align-items: center; border-radius: 10px; }
+  .cc-photo, .cc-initials { width: 34px; height: 34px; font-size: 0.7rem; flex-shrink: 0; }
+  .cc-info { min-width: 0; }
+  .cc-name { font-size: 0.75rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cc-dept { font-size: 0.63rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cc-pin { font-size: 0.6rem; }
+  .panel-header { padding: 12px 14px; }
+  .panel-header h3 { font-size: 0.88rem; }
+  .panel-stats { grid-template-columns: 1fr 1fr; gap: 8px; }
   .ps-num { font-size: 1.5rem; }
-  .absent-list { max-height: 160px; }
+  .ps-label { font-size: 0.6rem; }
+  .panel-body { padding: 10px 14px; }
+  .absent-list { max-height: 130px; }
+  .export-absent-btn { font-size: 0.8rem; padding: 8px; margin-top: 8px; }
 
-  /* Reports */
-  .reports-grid { grid-template-columns: 1fr; gap: 14px; }
+  /* PIN MODAL */
+  .pin-modal-body { padding: 18px 16px 22px; }
+  .pin-photo { width: 54px; height: 54px; }
+  .pin-initials { width: 54px; height: 54px; font-size: 1.2rem; }
+  .pin-member-name { font-size: 1.1rem; }
+  .pin-dots { gap: 10px; margin-bottom: 18px; }
+  .pin-dot { width: 13px; height: 13px; }
+  .pin-pad { gap: 8px; max-width: 230px; }
+  .pin-key { padding: 14px; font-size: 1.05rem; border-radius: 10px; }
+
+  /* ── REPORTS SCREEN ── */
   .report-stat-row { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .rstat-num { font-size: 1.6rem; }
+  .rstat { padding: 12px; }
+  .rstat-num { font-size: 1.5rem; }
+  .rstat-label { font-size: 0.62rem; }
+  .rstat-sub { font-size: 0.65rem; margin-top: 2px; }
+  .reports-grid { grid-template-columns: 1fr; gap: 12px; }
   .report-filter-bar { flex-direction: column; gap: 8px; }
   .report-filter-bar select, .report-filter-bar input { width: 100%; }
-  .consistency-row { gap: 8px; }
-  .cr-bar-wrap { width: 60px; }
-  #consistencyTableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 0 0 12px 12px; }
+  .report-filter-bar .btn { width: 100%; justify-content: center; }
+  .rc-header { flex-wrap: wrap; gap: 8px; padding: 12px 14px; }
+  .rc-title { font-size: 0.9rem; }
+  .rc-sub { font-size: 0.72rem; }
+  .rc-body { padding: 12px 14px; }
+  .rc-action { font-size: 0.75rem; }
+  .followup-row { flex-wrap: wrap; gap: 8px; }
+  .followup-avatar { width: 32px; height: 32px; font-size: 0.68rem; }
+  .followup-name { font-size: 0.84rem; }
+  .followup-detail { font-size: 0.7rem; }
+  .followup-streak { font-size: 0.7rem; }
+  .consistency-row { gap: 8px; padding: 7px 0; }
+  .cr-rank { width: 18px; font-size: 0.75rem; }
+  .cr-photo, .cr-initials { width: 28px; height: 28px; font-size: 0.62rem; }
+  .cr-name { font-size: 0.82rem; }
+  .cr-dept { font-size: 0.68rem; }
+  .cr-bar-wrap { width: 50px; }
+  .cr-pct { font-size: 0.75rem; width: 32px; }
+  .session-bar-row { flex-wrap: wrap; gap: 4px; }
+  .sb-label { font-size: 0.76rem; }
+  .sb-num { font-size: 0.78rem; }
+  #consistencyTableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .data-table#consistencyTable { min-width: 560px; }
   .data-table#consistencyTable thead { display: table-header-group; }
-  .data-table#consistencyTable tbody tr { display: table-row; }
-  .data-table#consistencyTable tbody tr td { display: table-cell; border-bottom: 1px solid var(--border); padding: 8px 10px; }
+  .data-table#consistencyTable tbody tr { display: table-row; border: none; }
+  .data-table#consistencyTable tbody tr td { display: table-cell; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.78rem; }
+  /* Report tab bar: horizontal scroll */
+  #page-reports > div:first-child { overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; padding-bottom: 2px; }
+  #page-reports .settings-nav-btn { white-space: nowrap; }
 
-  /* Report tab bar */
-  #page-reports > div:first-child { overflow-x: auto; white-space: nowrap; }
-
-  /* Departments */
+  /* ── DEPARTMENTS SCREEN ── */
   .dept-cards-grid { grid-template-columns: 1fr; gap: 10px; }
-  .dStatTotal, .dStatAssigned, .dStatLargest, .dStatUnassigned { font-size: 1.6rem; }
+  .dept-card { padding: 14px; }
+  .dept-icon { width: 38px; height: 38px; font-size: 1.2rem; }
+  .dept-card-name { font-size: 0.92rem; }
+  .dept-card-desc { font-size: 0.75rem; }
+  #page-departments .stats-row { grid-template-columns: 1fr 1fr; }
 
-  /* Settings */
-  .settings-grid { grid-template-columns: 1fr; }
-  #page-settings > div:first-child { overflow-x: auto; }
+  /* ── SETTINGS SCREEN ── */
+  #page-settings > div:first-child { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; white-space: nowrap; }
+  #page-settings .settings-nav-btn { white-space: nowrap; font-size: 0.78rem; padding: 7px 10px; }
+  .settings-card-header { padding: 12px 14px; flex-wrap: wrap; gap: 8px; }
+  .settings-card-title { font-size: 0.88rem; }
+  .settings-card-sub { font-size: 0.72rem; }
   .settings-card-body { padding: 14px; }
-  .settings-card-header { padding: 12px 14px; }
+  .settings-card-body table { width: 100%; font-size: 0.72rem; }
+  .settings-card-body table th, .settings-card-body table td { padding: 6px 8px; }
+  .user-row { flex-wrap: wrap; gap: 8px; padding: 10px 0; }
+  .user-info { flex: 1; min-width: 120px; }
+  .user-name { font-size: 0.84rem; }
+  .user-meta { font-size: 0.7rem; }
+  /* Meeting types list */
+  #meetingTypesList > div { flex-wrap: wrap; gap: 6px; }
 
-  /* Birthdays */
-  .birthday-row { flex-wrap: wrap; gap: 8px; }
-  .bday-info { min-width: 0; flex: 1; }
-  .whatsapp-btn { font-size: 0.7rem; padding: 4px 8px; }
-  .birthday-header { font-size: 0.92rem; }
+  /* ── BIRTHDAYS SCREEN ── */
+  #page-birthdays .stats-row { grid-template-columns: 1fr 1fr; }
+  #page-birthdays .toolbar { flex-wrap: wrap; gap: 8px; }
+  #page-birthdays .filter-select { flex: 1; }
+  .birthday-section { margin-bottom: 18px; }
+  .birthday-header { font-size: 0.88rem; }
+  .birthday-row { padding: 10px 12px; gap: 10px; flex-wrap: wrap; }
+  .bday-photo, .bday-initials { width: 36px; height: 36px; font-size: 0.72rem; }
+  .bday-info { flex: 1; min-width: 0; }
+  .bday-name { font-size: 0.86rem; }
+  .bday-detail { font-size: 0.7rem; }
+  .bday-badge { font-size: 0.68rem; padding: 2px 8px; }
+  .whatsapp-btn { font-size: 0.72rem; padding: 4px 9px; }
 
-  /* Communications */
-  .comms-grid { grid-template-columns: 1fr; gap: 14px; }
-  .comms-card-header { flex-direction: column; gap: 8px; align-items: flex-start; }
-  .reg-link-box { flex-direction: column; gap: 12px; }
-  .reg-link-actions { width: 100%; flex-direction: row; }
+  /* ── REGISTRATION SCREEN ── */
+  .reg-link-box { flex-direction: column; gap: 12px; padding: 18px; }
+  .reg-link-url { font-size: 0.72rem; padding: 8px 10px; word-break: break-all; }
+  .reg-link-actions { display: flex; flex-direction: row; gap: 8px; width: 100%; }
+  .reg-link-actions .btn { flex: 1; justify-content: center; font-size: 0.8rem; }
+  .pending-row { flex-wrap: wrap; gap: 8px; padding: 10px 0; align-items: center; }
+  .pending-info { flex: 1; min-width: 140px; }
+  .pending-name { font-size: 0.86rem; }
+  .pending-meta { font-size: 0.7rem; }
+  .pending-time { font-size: 0.7rem; color: var(--muted); }
 
-  /* Report cards - stack header on mobile */
-  .rc-header { flex-direction: column; gap: 10px; align-items: flex-start; }
-  .rc-header > div:last-child { width: 100%; }
-  .rc-header .btn, .rc-header button { width: 100%; justify-content: center; text-align: center; }
-  /* Exception: keep simple rc-action buttons inline */
-  .rc-header > button.rc-action { width: auto; }
-  
-  /* Consistency table header search row */
-  .rc-header > div:last-child input,
-  .rc-header > div:last-child select { flex: 1; font-size: 0.8rem; }
+  /* ── COMMUNICATIONS SCREEN ── */
+  .comms-grid { grid-template-columns: 1fr; gap: 12px; }
+  .comms-card-header { flex-wrap: wrap; gap: 8px; padding: 12px 14px; }
+  .comms-card-body { padding: 14px; }
+  .template-box { min-height: 80px; font-size: 0.84rem; }
+  .template-vars { gap: 4px; flex-wrap: wrap; }
+  .var-chip { font-size: 0.7rem; padding: 3px 8px; }
+  .wa-send-btn, .report-share-btn { width: 100%; justify-content: center; font-size: 0.84rem; }
+  #bulkRecipientList, #followupRecipientList { max-height: 180px; }
+  .recipient-row { padding: 7px 0; gap: 8px; }
+  .recipient-check { width: 22px; height: 22px; font-size: 0.8rem; }
+  .recipient-name { font-size: 0.82rem; }
+  .recipient-phone { font-size: 0.72rem; }
+  .monday-report-preview { font-size: 0.72rem; max-height: 180px; }
+  .send-log-row { gap: 8px; padding: 8px 0; }
 
-  /* Sidebar overlay backdrop */
-  .sidebar-backdrop {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 199;
-    backdrop-filter: blur(2px);
-  }
-  .sidebar-backdrop.open { display: block; }
+  /* ── SELF-REG PAGE ── */
+  .self-reg-wrap { padding: 20px 14px 70px; }
+  .self-reg-header h1 { font-size: 1.3rem; }
+  .self-reg-header p { font-size: 0.82rem; }
+  .self-reg-card { padding: 14px; margin-bottom: 12px; }
+  .self-reg-submit { padding: 13px; font-size: 0.9rem; letter-spacing: 0.02em; }
+
+  /* ── VOLUNTEER LOCK ── */
+  .vlock-pad { max-width: 220px; gap: 8px; }
+  .vlock-key { padding: 13px; font-size: 1rem; }
+  .vlock-dots { gap: 12px; margin-bottom: 20px; }
+  .vlock-dot { width: 13px; height: 13px; }
 }
 
-/* ── Small phones (≤380px) ── */
-@media (max-width: 380px) {
-  .checkin-grid { grid-template-columns: 1fr; }
-  .stats-row { grid-template-columns: 1fr 1fr; gap: 6px; }
-  .topbar-title { font-size: 1rem; }
-  .checkin-card { flex-direction: row; }
-  .modal-footer .btn { font-size: 0.8rem; padding: 8px; }
-  .pin-pad { max-width: 200px; }
-  .pin-key { padding: 12px; }
+/* ─── SMALL PHONES ≤ 390px ─── */
+@media (max-width: 390px) {
+  .page-content { padding: 10px 10px 90px; }
+  .stats-row { gap: 6px; }
+  .stat-card { padding: 10px 8px; }
+  .stat-num { font-size: 1.4rem; }
+  .stat-label { font-size: 0.56rem; }
+  .checkin-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .checkin-card { padding: 8px 6px; }
+  .cc-name { font-size: 0.7rem; }
+  .pin-pad { max-width: 210px; }
+  .pin-key { padding: 12px; font-size: 0.98rem; }
+  .filter-select { font-size: 0.76rem; padding: 7px 5px; }
+  .modal-footer .btn { padding: 8px; font-size: 0.8rem; }
   .vlock-pad { max-width: 200px; }
-  .vlock-key { padding: 12px; }
 }
 
-/* ── Landscape mobile ── */
+/* ─── LANDSCAPE MOBILE ─── */
 @media (max-width: 768px) and (orientation: landscape) {
   .modal { max-height: 96vh; border-radius: 12px; }
   .modal-backdrop { align-items: center; padding: 8px; }
-  .pin-modal-body { padding: 16px; }
-  .pin-dots { margin-bottom: 14px; }
-  .pin-pad { gap: 7px; }
-  .pin-key { padding: 10px; }
+  .pin-modal-body { padding: 12px 16px; }
+  .pin-dots { margin-bottom: 10px; }
+  .pin-pad { gap: 6px; }
+  .pin-key { padding: 9px; }
 }
 
 /* ── MOBILE BOTTOM NAV ── */
 .mobile-bottom-nav {
   display: none;
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
+  position: fixed; bottom: 0; left: 0; right: 0;
   background: var(--navy3);
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(255,255,255,0.07);
   z-index: 150;
-  padding: 8px 0 env(safe-area-inset-bottom, 8px);
+  padding: 5px 0 env(safe-area-inset-bottom, 5px);
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
 }
 .mbn-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.45);
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: none; border: none;
+  color: rgba(255,255,255,0.38);
   font-family: 'Lexend Deca', sans-serif;
-  font-size: 0.62rem;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 6px 14px;
-  border-radius: 8px;
-  transition: all 0.15s;
-  letter-spacing: 0.02em;
-  min-width: 64px;
+  font-size: 0.6rem; font-weight: 500;
+  cursor: pointer; padding: 6px 8px; border-radius: 8px;
+  transition: color 0.15s; min-width: 54px;
+  -webkit-tap-highlight-color: transparent;
 }
-.mbn-btn svg { stroke: currentColor; transition: stroke 0.15s; }
-.mbn-btn.active {
-  color: #4ADE80;
-}
+.mbn-btn.active { color: #4ADE80; }
 .mbn-btn.active svg { stroke: #4ADE80; }
-.mbn-btn:active { opacity: 0.7; transform: scale(0.95); }
+.mbn-btn:active { opacity: 0.6; transform: scale(0.92); }
 
 @media (max-width: 768px) {
   .mobile-bottom-nav { display: flex; }
-  /* Push page content above bottom nav */
-  .page-content { padding-bottom: 80px; }
-  /* Hide the hamburger menu toggle when bottom nav is visible */
-  .menu-toggle { display: none; }
-  /* Topbar left padding back to normal since no hamburger */
-  .topbar { padding-left: 16px; }
+  .page-content { padding-bottom: 88px; }
 }
-
 </style>
 </head>
 <body>
@@ -3504,6 +3509,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
   document.querySelectorAll('.modal-backdrop').forEach(b => b.addEventListener('click', e => { if (e.target === b) closeModal(b.id); }));
 
+  // ── Test Supabase connection on startup ──
+  testSupabaseConnection();
+
   // ── Check for registration link BEFORE login ──
   if (window.location.search.includes('register=1')) {
     // Hide login, show self-reg form directly — no password needed
@@ -3677,36 +3685,85 @@ function filterMembers() {
 function renderMemberTable() {
   const tbody = document.getElementById('memberTableBody');
   const total = filteredMembers.length;
+  const isMobile = window.innerWidth <= 768;
+
   if (total === 0) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-table"><div style="font-size:2rem">👥</div><p>${allMembers.length === 0 ? 'No members yet.' : 'No members match.'}</p></div></td></tr>`;
-    document.getElementById('pagination').style.display = 'none'; return;
+    const msg = allMembers.length === 0
+      ? 'No members yet. Click <strong>+ Add Member</strong> to get started.'
+      : 'No members match your search.';
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-table"><div style="font-size:2rem;margin-bottom:8px">👥</div><p>${msg}</p></div></td></tr>`;
+    document.getElementById('pagination').style.display = 'none';
+    return;
   }
+
   const start = (currentPage - 1) * PER_PAGE;
   const pageData = filteredMembers.slice(start, start + PER_PAGE);
-  tbody.innerHTML = pageData.map(m => {
-    const initials = m.full_name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
-    const photo = m.photo_url ? `<img class="member-photo" src="${m.photo_url}" onerror="this.outerHTML='<div class=\\'member-initials\\'>${initials}</div>'">` : `<div class="member-initials">${initials}</div>`;
-    const joined = m.date_joined ? new Date(m.date_joined + 'T12:00:00').toLocaleDateString('en-GB', { day:'numeric',month:'short',year:'numeric'}) : '—';
-    return `<tr onclick="viewProfile('${m.id}')">
-      <td><div class="member-cell">${photo}<div><div class="member-name-cell">${m.full_name}</div>${m.email?`<div class="member-id-cell">${m.email}</div>`:''}</div></div></td>
-      <td><span style="font-family:monospace;font-size:0.8rem;color:var(--warm-gray)">${m.member_id}</span></td>
-      <td>${m.phone||'—'}</td>
-      <td>${m.department?`<span class="dept-badge">${m.department}</span>`:'—'}</td>
-      <td style="color:var(--warm-gray);font-size:0.82rem">${joined}</td>
-      <td><span class="status-dot ${m.is_active?'':'inactive'}">${m.is_active?'Active':'Inactive'}</span></td>
-      <td onclick="event.stopPropagation()"><div class="row-actions">
-        <button class="icon-btn" onclick="openEditModal('${m.id}')">✏️</button>
-        <button class="icon-btn del" onclick="deleteMember('${m.id}','${m.full_name?.replace(/'/g,"\\'")}',event)">🗑</button>
-      </div></td>
-    </tr>`;
-  }).join('');
+
+  if (isMobile) {
+    // ── MOBILE: horizontal stacked cards ──
+    tbody.innerHTML = pageData.map(m => {
+      const initials = (m.full_name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+      const avatar = m.photo_url
+        ? `<img src="${m.photo_url}" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--border)">`
+        : `<div style="width:46px;height:46px;border-radius:50%;background:rgba(26,31,94,0.09);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.82rem;color:var(--navy);flex-shrink:0;letter-spacing:-0.5px">${initials}</div>`;
+      const joined = m.date_joined
+        ? new Date(m.date_joined + 'T12:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
+        : '';
+      const deptBadge = m.department
+        ? `<span style="background:rgba(26,31,94,0.08);color:var(--navy);border:1px solid rgba(26,31,94,0.14);border-radius:20px;padding:1px 7px;font-size:0.67rem;font-weight:500;white-space:nowrap">${m.department}</span>`
+        : '';
+      const statusDot = `<span style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;font-weight:500;color:${m.is_active ? 'var(--green)' : 'var(--muted)'}"><span style="width:6px;height:6px;border-radius:50%;background:${m.is_active ? 'var(--green)' : 'var(--muted)'};flex-shrink:0"></span>${m.is_active ? 'Active' : 'Inactive'}</span>`;
+      return `<tr><td colspan="7" style="padding:0;border:none;display:block">
+        <div onclick="viewProfile('${m.id}')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);background:white;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background 0.1s" ontouchstart="this.style.background='rgba(26,31,94,0.03)'" ontouchend="this.style.background='white'">
+          ${avatar}
+          <div style="flex:1;min-width:0;overflow:hidden">
+            <div style="font-weight:600;font-size:0.9rem;color:var(--navy);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.full_name}</div>
+            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;row-gap:3px">
+              ${m.phone ? `<span style="font-size:0.74rem;color:var(--muted)">${m.phone}</span>` : ''}
+              ${deptBadge}
+            </div>
+            ${joined ? `<div style="font-size:0.69rem;color:var(--muted);margin-top:3px">${joined}</div>` : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;padding-left:4px">
+            ${statusDot}
+            <svg width="14" height="14" fill="none" stroke="var(--border2)" viewBox="0 0 24 24" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+      </td></tr>`;
+    }).join('');
+
+  } else {
+    // ── DESKTOP: full table ──
+    tbody.innerHTML = pageData.map(m => {
+      const initials = (m.full_name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+      const photo = m.photo_url
+        ? `<img class="member-photo" src="${m.photo_url}" onerror="this.outerHTML='<div class=\'member-initials\'>${initials}</div>'">`
+        : `<div class="member-initials">${initials}</div>`;
+      const joined = m.date_joined
+        ? new Date(m.date_joined + 'T12:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
+        : '—';
+      return `<tr onclick="viewProfile('${m.id}')">
+        <td><div class="member-cell">${photo}<div><div class="member-name-cell">${m.full_name}</div>${m.email ? `<div class="member-id-cell">${m.email}</div>` : ''}</div></div></td>
+        <td><span style="font-family:monospace;font-size:0.8rem;color:var(--warm-gray)">${m.member_id}</span></td>
+        <td>${m.phone || '—'}</td>
+        <td>${m.department ? `<span class="dept-badge">${m.department}</span>` : '—'}</td>
+        <td style="color:var(--warm-gray);font-size:0.82rem">${joined}</td>
+        <td><span class="status-dot ${m.is_active ? '' : 'inactive'}">${m.is_active ? 'Active' : 'Inactive'}</span></td>
+        <td onclick="event.stopPropagation()"><div class="row-actions">
+          <button class="icon-btn" onclick="openEditModal('${m.id}')">✏️</button>
+          <button class="icon-btn del" onclick="deleteMember('${m.id}','${(m.full_name || '').replace(/'/g, "\'")}',event)">🗑</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
   const totalPages = Math.ceil(total / PER_PAGE);
   document.getElementById('pagination').style.display = totalPages > 1 ? 'flex' : 'none';
-  document.getElementById('pageInfo').textContent = `Showing ${start+1}–${Math.min(start+PER_PAGE,total)} of ${total}`;
+  document.getElementById('pageInfo').textContent = `${start + 1}–${Math.min(start + PER_PAGE, total)} of ${total}`;
   const btns = document.getElementById('pageBtns');
-  btns.innerHTML = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
-  for (let i=1;i<=totalPages;i++) btns.innerHTML+=`<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
-  btns.innerHTML+=`<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+  btns.innerHTML = `<button class="page-btn" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+  for (let i = 1; i <= totalPages; i++) btns.innerHTML += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+  btns.innerHTML += `<button class="page-btn" onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>›</button>`;
 }
 
 function goPage(p) {
@@ -3950,6 +4007,7 @@ function updateOnlineStatus() {
   if(badge){badge.style.display=offlineQueue.length>0?'inline-flex':'none';badge.textContent=`${offlineQueue.length} queued`;}
 }
 window.addEventListener('online',()=>{isOnline=true;updateOnlineStatus();syncOfflineQueue();});
+window.addEventListener('resize', () => { clearTimeout(window._resizeTimer); window._resizeTimer = setTimeout(() => { renderMemberTable(); renderCheckinGrid(); }, 200); });
 window.addEventListener('offline',()=>{isOnline=false;updateOnlineStatus();});
 
 async function loadCheckinState() {
@@ -4409,197 +4467,11 @@ function initRegistration(){const url=window.location.href.split('?')[0]+'?regis
 function copyRegLink(){const url=window.location.href.split('?')[0]+'?register=1';navigator.clipboard.writeText(url).then(()=>showToast('Registration link copied!','success')).catch(()=>showToast('Copy the link manually','info'));}
 function openSelfRegForm(){const cn=appSettings.churchName||'The Precious House';document.getElementById('selfRegChurchName').textContent=cn;document.getElementById('selfRegSuccessChurch').textContent=cn;document.getElementById('selfRegPage').classList.add('open');document.getElementById('selfRegFormBody').style.display='block';document.getElementById('selfRegSuccess').classList.remove('show');}
 function closeSelfRegForm(){document.getElementById('selfRegPage').classList.remove('open');}
-async function submitSelfReg(){
-  const name = document.getElementById('sr_name').value.trim();
-  const phone = document.getElementById('sr_phone').value.trim();
-  const pin = document.getElementById('sr_pin')?.value || '';
-  const pinConfirm = document.getElementById('sr_pin_confirm')?.value || '';
 
-  // Validation
-  if (!name) { showToast('Full name is required', 'error'); return; }
-  if (!phone) { showToast('Phone number is required', 'error'); return; }
-  if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-    showToast('Please set a 4-digit check-in PIN', 'error'); return;
-  }
-  if (pin !== pinConfirm) {
-    showToast('PINs do not match', 'error'); return;
-  }
 
-  const btn = document.querySelector('.self-reg-submit');
-  if (btn) { btn.textContent = 'Submitting...'; btn.disabled = true; }
 
-  // Hash the PIN
-  const pinHash = await hashPin(pin);
 
-  const payload = {
-    full_name: name,
-    phone,
-    email: document.getElementById('sr_email').value.trim() || null,
-    date_of_birth: document.getElementById('sr_dob').value || null,
-    gender: document.getElementById('sr_gender').value || null,
-    marital_status: document.getElementById('sr_marital').value || null,
-    address: document.getElementById('sr_address').value.trim() || null,
-    department: document.getElementById('sr_dept').value || null,
-    how_heard: document.getElementById('sr_source').value || null,
-    next_of_kin_name: document.getElementById('sr_kin_name').value.trim() || null,
-    next_of_kin_phone: document.getElementById('sr_kin_phone').value.trim() || null,
-    next_of_kin_relationship: document.getElementById('sr_kin_rel').value || null,
-    pin_hash: pinHash,
-    submitted_at: new Date().toISOString(),
-    status: 'pending'
-  };
 
-  let saved = false;
-
-  // PRIMARY: Supabase — cross-device, any admin sees it
-  try {
-    const { error } = await db.from('pending_registrations').insert([payload]);
-    if (!error) {
-      saved = true;
-      console.log('Saved to Supabase successfully');
-    } else {
-      console.error('Supabase error:', error);
-    }
-  } catch(e) {
-    console.warn('Supabase save failed, trying localStorage:', e);
-  }
-
-  // FALLBACK: localStorage (same device only)
-  if (!saved) {
-    try {
-      const queue = JSON.parse(localStorage.getItem('tph_pending_reg') || '[]');
-      queue.push({ ...payload, id: Date.now().toString() });
-      localStorage.setItem('tph_pending_reg', JSON.stringify(queue));
-      saved = true;
-      console.log('Saved to localStorage as fallback');
-    } catch(e) {
-      console.warn('localStorage save also failed:', e);
-    }
-  }
-
-  if (btn) { btn.textContent = 'Submit Registration →'; btn.disabled = false; }
-
-  if (saved) {
-    document.getElementById('selfRegFormBody').style.display = 'none';
-    document.getElementById('selfRegSuccess').classList.add('show');
-  } else {
-    showToast('Submission failed. Please check your internet connection and try again.', 'error');
-  }
-}
-async function loadPendingRegistrations(){
-  const el=document.getElementById('pendingRegList');if(!el)return;
-  el.innerHTML='<div class="rc-empty"><div class="spinner" style="margin:0 auto 8px"></div>Loading...</div>';
-
-  // Combine from Supabase (cross-device) + localStorage (same-device fallback)
-  let pending = [];
-
-  // From Supabase first
-  try {
-    const { data } = await db.from('pending_registrations').select('*').eq('status','pending').order('submitted_at',{ascending:false});
-    if (data && data.length) pending = data;
-  } catch(e) { console.warn('Could not load from Supabase:', e); }
-
-  // Merge from localStorage (dedupe by name+phone)
-  const local = JSON.parse(localStorage.getItem('tph_pending_reg')||'[]').filter(r=>r.status==='pending');
-  const existingKeys = new Set(pending.map(r=>r.full_name+'|'+r.phone));
-  local.forEach(r => { if (!existingKeys.has(r.full_name+'|'+r.phone)) pending.push(r); });
-
-  if(!pending.length){
-    el.innerHTML='<div class="rc-empty">No pending registrations. Share the link to get started.</div>';
-    return;
-  }
-  el.innerHTML=pending.map(r=>{
-    const time=new Date(r.submitted_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
-    const rid = r.id || (r.full_name+'|'+r.phone);
-    return`<div class="pending-row">
-      <div class="pending-info">
-        <div class="pending-name">${r.full_name}</div>
-        <div class="pending-meta">${r.phone||''} · ${r.department||'No dept'} · ${r.gender||''}</div>
-      </div>
-      <div class="pending-time">${time}</div>
-      <button class="btn btn-primary" style="padding:6px 12px;font-size:0.78rem" onclick="approvePending('${rid}')">✓ Approve</button>
-      <button class="btn btn-danger" style="padding:6px 10px;font-size:0.78rem" onclick="rejectPending('${rid}')">✕</button>
-    </div>`;
-  }).join('');
-}
-async function approvePending(id){
-  // Find from Supabase or localStorage
-  let reg = null;
-  let fromSupabase = false;
-
-  // Try Supabase first
-  try {
-    const { data } = await db.from('pending_registrations').select('*').eq('id', id).single();
-    if (data) { reg = data; fromSupabase = true; }
-  } catch(e) {}
-
-  // Fallback to localStorage
-  if (!reg) {
-    const pending = JSON.parse(localStorage.getItem('tph_pending_reg')||'[]');
-    reg = pending.find(r => r.id === id || (r.full_name+'|'+r.phone) === id);
-  }
-
-  if (!reg) { showToast('Registration not found', 'error'); return; }
-
-  const payload = {
-    full_name: reg.full_name, phone: reg.phone, email: reg.email||null,
-    date_of_birth: reg.date_of_birth||null, gender: reg.gender||null,
-    marital_status: reg.marital_status||null, address: reg.address||null,
-    department: reg.department||null,
-    next_of_kin_name: reg.next_of_kin_name||null,
-    next_of_kin_phone: reg.next_of_kin_phone||null,
-    next_of_kin_relationship: reg.next_of_kin_relationship||null,
-    date_joined: new Date().toISOString().split('T')[0],
-    member_id: generateMemberId(), is_active: true,
-    member_type: 'Regular Member', member_category: reg.member_category||'Adult',
-    pin_hash: reg.pin_hash||null  // carry over the PIN they set during registration
-  };
-
-  try {
-    const { error } = await db.from('members').insert([payload]);
-    if (error) throw error;
-
-    // Mark as approved in Supabase
-    if (fromSupabase) {
-      await db.from('pending_registrations').update({status:'approved'}).eq('id', id);
-    }
-    // Also update localStorage
-    const local = JSON.parse(localStorage.getItem('tph_pending_reg')||'[]');
-    localStorage.setItem('tph_pending_reg', JSON.stringify(local.map(r=>
-      (r.id===id || (r.full_name+'|'+r.phone)===id) ? {...r,status:'approved'} : r
-    )));
-
-    showToast(`${reg.full_name} approved and added to registry`, 'success');
-    logActivity(`Self-registration approved: ${reg.full_name}`, 'success');
-    loadPendingRegistrations(); loadMembers();
-  } catch(e) { showToast('Error: '+e.message, 'error'); }
-}
-async function rejectPending(id){
-  if(!confirm('Reject this registration?'))return;
-  // Update Supabase
-  try { await db.from('pending_registrations').update({status:'rejected'}).eq('id',id); } catch(e){}
-  // Update localStorage
-  const local=JSON.parse(localStorage.getItem('tph_pending_reg')||'[]');
-  localStorage.setItem('tph_pending_reg',JSON.stringify(local.map(r=>(r.id===id||(r.full_name+'|'+r.phone)===id)?{...r,status:'rejected'}:r)));
-  loadPendingRegistrations();
-  showToast('Registration rejected','info');
-}
-async function approveAllPending(){
-  // Get pending from Supabase
-  let pending = [];
-  try {
-    const { data } = await db.from('pending_registrations').select('*').eq('status','pending');
-    if (data && data.length) pending = data;
-  } catch(e){}
-  // Also check localStorage
-  const local = JSON.parse(localStorage.getItem('tph_pending_reg')||'[]').filter(r=>r.status==='pending');
-  const supaKeys = new Set(pending.map(r=>r.full_name+'|'+r.phone));
-  local.forEach(r=>{ if(!supaKeys.has(r.full_name+'|'+r.phone)) pending.push(r); });
-  if(!pending.length){showToast('No pending registrations','info');return;}
-  if(!confirm(`Approve all ${pending.length} registration(s)?`))return;
-  for(const reg of pending) await approvePending(reg.id||reg.full_name+'|'+reg.phone);
-  showToast(`All ${pending.length} registrations approved`,'success');
-}
 // checkRegLink handled in DOMContentLoaded
 
 // ══════════════════════════════════════════
@@ -4883,6 +4755,232 @@ function updateBottomNav(page) {
   document.querySelectorAll('.mbn-btn').forEach(b => b.classList.remove('active'));
   const btn = document.getElementById('mbn-' + page);
   if (btn) btn.classList.add('active');
+}
+
+
+// ══════════════════════════════════════════
+// SUPABASE CONNECTION + PENDING REG FIX
+// ══════════════════════════════════════════
+
+let supabaseOK = false;
+
+async function testSupabaseConnection() {
+  try {
+    const { data, error } = await db.from('members').select('id').limit(1);
+    if (error) throw error;
+    supabaseOK = true;
+    console.log('✓ Supabase connected');
+  } catch(e) {
+    supabaseOK = false;
+    console.warn('✗ Supabase connection failed:', e.message);
+  }
+}
+
+// ── SUBMIT SELF-REGISTRATION ──
+async function submitSelfReg() {
+  const name = document.getElementById('sr_name').value.trim();
+  const phone = document.getElementById('sr_phone').value.trim();
+  const pin = document.getElementById('sr_pin')?.value || '';
+  const pinConfirm = document.getElementById('sr_pin_confirm')?.value || '';
+
+  if (!name) { showToast('Full name is required', 'error'); return; }
+  if (!phone) { showToast('Phone number is required', 'error'); return; }
+  if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+    showToast('Please set a 4-digit check-in PIN', 'error'); return;
+  }
+  if (pin !== pinConfirm) { showToast('PINs do not match', 'error'); return; }
+
+  const btn = document.querySelector('.self-reg-submit');
+  if (btn) { btn.textContent = 'Submitting...'; btn.disabled = true; }
+
+  const pinHash = await hashPin(pin);
+
+  const payload = {
+    full_name: name, phone,
+    email: document.getElementById('sr_email').value.trim() || null,
+    date_of_birth: document.getElementById('sr_dob').value || null,
+    gender: document.getElementById('sr_gender').value || null,
+    marital_status: document.getElementById('sr_marital').value || null,
+    address: document.getElementById('sr_address').value.trim() || null,
+    department: document.getElementById('sr_dept').value || null,
+    how_heard: document.getElementById('sr_source').value || null,
+    next_of_kin_name: document.getElementById('sr_kin_name').value.trim() || null,
+    next_of_kin_phone: document.getElementById('sr_kin_phone').value.trim() || null,
+    next_of_kin_relationship: document.getElementById('sr_kin_rel').value || null,
+    pin_hash: pinHash,
+    submitted_at: new Date().toISOString(),
+    status: 'pending'
+  };
+
+  let savedToSupabase = false;
+
+  // PRIMARY: Supabase — cross-device
+  try {
+    const { error } = await db.from('pending_registrations').insert([payload]);
+    if (error) {
+      console.error('Supabase insert error:', error);
+      throw error;
+    }
+    savedToSupabase = true;
+    console.log('✓ Saved to Supabase');
+  } catch(e) {
+    console.warn('Supabase save failed:', e.message || e);
+  }
+
+  // ALWAYS save to localStorage too (so offline and fallback works)
+  try {
+    const queue = JSON.parse(localStorage.getItem('tph_pending_reg') || '[]');
+    queue.push({ ...payload, id: Date.now().toString(), _savedToSupabase: savedToSupabase });
+    localStorage.setItem('tph_pending_reg', JSON.stringify(queue));
+    console.log('✓ Saved to localStorage' + (savedToSupabase ? ' (backup)' : ' (primary fallback)'));
+  } catch(e) {
+    console.warn('localStorage save failed:', e);
+  }
+
+  if (btn) { btn.textContent = 'Submit Registration →'; btn.disabled = false; }
+
+  // Always show success — we have at least localStorage
+  document.getElementById('selfRegFormBody').style.display = 'none';
+  document.getElementById('selfRegSuccess').classList.add('show');
+}
+
+// ── LOAD PENDING REGISTRATIONS ──
+async function loadPendingRegistrations() {
+  const el = document.getElementById('pendingRegList');
+  if (!el) return;
+  el.innerHTML = '<div class="rc-empty" style="padding:20px;text-align:center"><div style="opacity:0.5;margin-bottom:8px">⏳</div>Loading...</div>';
+
+  let pending = [];
+
+  // Load from Supabase
+  try {
+    const { data, error } = await db.from('pending_registrations')
+      .select('*').eq('status', 'pending').order('submitted_at', { ascending: false });
+    if (error) throw error;
+    if (data) pending = data;
+  } catch(e) {
+    console.warn('Supabase load failed:', e.message);
+  }
+
+  // Merge from localStorage (catch submissions made offline or before Supabase was fixed)
+  try {
+    const local = JSON.parse(localStorage.getItem('tph_pending_reg') || '[]')
+      .filter(r => r.status === 'pending');
+    const supaKeys = new Set(pending.map(r => r.phone + r.full_name));
+    local.forEach(r => {
+      if (!supaKeys.has(r.phone + r.full_name)) {
+        pending.push(r);
+      }
+    });
+  } catch(e) {}
+
+  if (!pending.length) {
+    el.innerHTML = '<div class="rc-empty">No pending registrations.</div>';
+    return;
+  }
+
+  el.innerHTML = pending.map(r => {
+    const time = new Date(r.submitted_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+    const rid = r.id || (r.full_name + '|' + r.phone);
+    const isLocal = !r.id || typeof r.id === 'string' && r.id.length < 10;
+    return `<div class="pending-row">
+      <div class="pending-info">
+        <div class="pending-name">${r.full_name}${isLocal ? ' <span style="font-size:0.65rem;color:var(--muted);background:var(--border);padding:1px 5px;border-radius:4px">local</span>' : ''}</div>
+        <div class="pending-meta">${r.phone || ''} · ${r.department || 'No dept'} · ${r.gender || ''}</div>
+      </div>
+      <div class="pending-time">${time}</div>
+      <button class="btn btn-primary" style="padding:6px 12px;font-size:0.78rem;flex-shrink:0" onclick="approvePending('${rid}')">✓ Approve</button>
+      <button class="btn btn-danger" style="padding:6px 10px;font-size:0.78rem;flex-shrink:0" onclick="rejectPending('${rid}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ── APPROVE PENDING ──
+async function approvePending(id) {
+  let reg = null;
+  let isSupabaseId = false;
+
+  // Try Supabase first (UUID format)
+  if (id && id.includes('-')) {
+    try {
+      const { data } = await db.from('pending_registrations').select('*').eq('id', id).single();
+      if (data) { reg = data; isSupabaseId = true; }
+    } catch(e) {}
+  }
+
+  // Try localStorage
+  if (!reg) {
+    const localKey = id.includes('|') ? id : null;
+    const local = JSON.parse(localStorage.getItem('tph_pending_reg') || '[]');
+    reg = local.find(r => r.id === id || (localKey && r.full_name + '|' + r.phone === localKey));
+  }
+
+  if (!reg) { showToast('Registration not found', 'error'); return; }
+
+  const payload = {
+    full_name: reg.full_name, phone: reg.phone, email: reg.email || null,
+    date_of_birth: reg.date_of_birth || null, gender: reg.gender || null,
+    marital_status: reg.marital_status || null, address: reg.address || null,
+    department: reg.department || null,
+    next_of_kin_name: reg.next_of_kin_name || null,
+    next_of_kin_phone: reg.next_of_kin_phone || null,
+    next_of_kin_relationship: reg.next_of_kin_relationship || null,
+    date_joined: new Date().toISOString().split('T')[0],
+    member_id: generateMemberId(), is_active: true,
+    member_type: 'Regular Member', member_category: reg.member_category || 'Adult',
+    pin_hash: reg.pin_hash || null
+  };
+
+  try {
+    const { error } = await db.from('members').insert([payload]);
+    if (error) throw error;
+
+    // Mark approved in Supabase
+    if (isSupabaseId) {
+      await db.from('pending_registrations').update({ status: 'approved' }).eq('id', id);
+    }
+
+    // Mark approved in localStorage
+    const local = JSON.parse(localStorage.getItem('tph_pending_reg') || '[]');
+    localStorage.setItem('tph_pending_reg', JSON.stringify(
+      local.map(r => (r.id === id || r.full_name + '|' + r.phone === id) ? { ...r, status: 'approved' } : r)
+    ));
+
+    showToast(`${reg.full_name} approved and added to registry`, 'success');
+    logActivity(`Self-registration approved: ${reg.full_name}`, 'success');
+    loadPendingRegistrations();
+    loadMembers();
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  }
+}
+
+// ── REJECT PENDING ──
+async function rejectPending(id) {
+  if (!confirm('Reject this registration?')) return;
+  try { await db.from('pending_registrations').update({ status: 'rejected' }).eq('id', id); } catch(e) {}
+  const local = JSON.parse(localStorage.getItem('tph_pending_reg') || '[]');
+  localStorage.setItem('tph_pending_reg', JSON.stringify(
+    local.map(r => (r.id === id || r.full_name + '|' + r.phone === id) ? { ...r, status: 'rejected' } : r)
+  ));
+  loadPendingRegistrations();
+  showToast('Registration rejected', 'info');
+}
+
+// ── APPROVE ALL ──
+async function approveAllPending() {
+  let pending = [];
+  try {
+    const { data } = await db.from('pending_registrations').select('*').eq('status', 'pending');
+    if (data) pending = data;
+  } catch(e) {}
+  const local = JSON.parse(localStorage.getItem('tph_pending_reg') || '[]').filter(r => r.status === 'pending');
+  const supaKeys = new Set(pending.map(r => r.phone + r.full_name));
+  local.forEach(r => { if (!supaKeys.has(r.phone + r.full_name)) pending.push(r); });
+  if (!pending.length) { showToast('No pending registrations', 'info'); return; }
+  if (!confirm(`Approve all ${pending.length} registration(s)?`)) return;
+  for (const reg of pending) await approvePending(reg.id || reg.full_name + '|' + reg.phone);
+  showToast(`All ${pending.length} registrations approved`, 'success');
 }
 
 </script>
