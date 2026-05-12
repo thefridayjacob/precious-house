@@ -5206,13 +5206,20 @@ function toggleMemberPinField() {
 }
 
 // Wrap openSelfRegForm to reset PIN visibility
-const _srOrigOpen = openSelfRegForm;
 function openSelfRegForm() {
-  _srOrigOpen();
-  setTimeout(() => {
-    const cat = document.getElementById('sr_category'); if(cat) cat.value='Adult';
-    const card = document.getElementById('srPinCard'); if(card) card.style.display='block';
-  }, 50);
+  const cn = appSettings.churchName || 'The Precious House';
+  const scn = document.getElementById('selfRegChurchName');
+  const scs = document.getElementById('selfRegSuccessChurch');
+  if (scn) scn.textContent = cn;
+  if (scs) scs.textContent = cn;
+  document.getElementById('selfRegPage').classList.add('open');
+  document.getElementById('selfRegFormBody').style.display = 'block';
+  document.getElementById('selfRegSuccess').classList.remove('show');
+  // Reset form state
+  const cat = document.getElementById('sr_category');
+  if (cat) cat.value = 'Adult';
+  const card = document.getElementById('srPinCard');
+  if (card) card.style.display = 'block';
 }
 
   showToast(`All ${pending.length} registrations approved`, 'success');
