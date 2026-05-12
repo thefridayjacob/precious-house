@@ -6,7 +6,7 @@
 <title>The Precious House — Member Registry</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&family=Lexend+Deca:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
@@ -2611,6 +2611,9 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
               </div>
             </div>
             <div class="checkin-grid" id="checkinGrid">
+              <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--warm-gray)">
+                <div class="spinner" style="margin:0 auto 12px"></div>Loading members...
+              </div>
             </div>
           </div>
 
@@ -3346,24 +3349,14 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
           </select>
         </div>
         <div class="form-group"><label class="form-label">Member Category *</label>
-          <select class="form-select" id="f_category" onchange="toggleMemberPinField()">
+          <select class="form-select" id="f_category">
             <option value="Adult">Adult</option>
             <option value="Youth">Youth</option>
             <option value="Child">Child</option>
           </select>
         </div>
         <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="f_status"><option value="true">Active</option><option value="false">Inactive</option></select></div>
-        <div class="form-group full">
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 14px;background:rgba(26,31,94,0.04);border-radius:8px;border:1.5px solid var(--border)">
-            <input type="checkbox" id="f_assisted" style="width:16px;height:16px;cursor:pointer;accent-color:var(--navy)">
-            <div>
-              <div style="font-size:0.84rem;font-weight:600;color:var(--navy)">Assisted Check-in</div>
-              <div style="font-size:0.72rem;color:var(--muted);margin-top:1px">Tap to mark present — no PIN required. Use for elders, children, or anyone who needs assistance.</div>
-            </div>
-          </label>
-        </div>
       </div>
-      <div id="memberPinRow">
       <div class="form-section-title">🔐 Check-in PIN</div>
       <div class="form-grid">
         <div class="form-group"><label class="form-label">4-Digit PIN</label>
@@ -3373,7 +3366,6 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
           </div>
         </div>
         <div class="form-group"><label class="form-label">Confirm PIN</label><input class="form-input pin-setup-input" id="f_pin_confirm" type="password" maxlength="4" placeholder="••••" inputmode="numeric"></div>
-      </div>
       </div>
       <div class="form-section-title">🤝 Next of Kin</div>
       <div class="form-grid">
@@ -3461,19 +3453,7 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
 // ── SUPABASE ──
 const SUPA_URL = 'https://gqjwixdtptkaccnonpab.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxandpeGR0cHRrYWNjbm9ucGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTM3NDMsImV4cCI6MjA5MzQ2OTc0M30.TwWkRu4rx0PIfF0lhmZyfJw2l1SP2ZEYpWGejkxLigk';
-// Guard: if Supabase CDN failed to load, create a safe stub so app doesn't crash
-let db;
-if (window.supabase && typeof window.supabase.createClient === 'function') {
-  db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-} else {
-  console.error('Supabase library failed to load. Check network connection.');
-  // Safe stub — all DB calls will fail gracefully with error handling
-  const noop = () => ({ data: null, error: { message: 'Supabase not loaded' } });
-  const stub = () => ({ select: stub, insert: noop, update: stub, delete: stub, 
-    upsert: noop, order: stub, limit: stub, eq: stub, neq: stub, gte: stub,
-    in: stub, single: noop, then: (cb) => cb({ data: null, error: { message: 'Supabase not loaded' } }) });
-  db = { from: () => stub(), storage: { from: () => ({ upload: noop, getPublicUrl: () => ({ data: { publicUrl: '' } }) }) } };
-}
+const db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
 // ── STATE ──
 let allMembers = [];
@@ -3881,7 +3861,6 @@ async function saveMember() {
       date_joined:document.getElementById('f_joined').value||null, member_type:document.getElementById('f_type').value||null,
       member_category:document.getElementById('f_category')?.value||'Adult',
       is_active:document.getElementById('f_status').value==='true',
-      assisted_checkin:document.getElementById('f_assisted')?.checked||false,
       next_of_kin_name:document.getElementById('f_kin_name').value.trim()||null,
       next_of_kin_phone:document.getElementById('f_kin_phone').value.trim()||null,
       next_of_kin_relationship:document.getElementById('f_kin_rel').value||null, photo_url:photoUrl,
@@ -3999,16 +3978,12 @@ let presentSet = new Set();
 let offlineQueue = JSON.parse(localStorage.getItem('tph_offline_queue') || '[]');
 let isOnline = navigator.onLine;
 
-async function initCheckin() {
+function initCheckin() {
   checkinDate = new Date().toISOString().split('T')[0];
   const picker = document.getElementById('checkinDatePicker');
   if (picker) picker.value = checkinDate;
   updateOnlineStatus();
-  // Load members if not already loaded
-  if (!allMembers.length) await loadMembers();
   populateMeetingSelect(checkinDate);
-  renderCheckinGrid();
-  renderPanel();
 }
 
 function populateMeetingSelect(dateStr) {
@@ -4097,7 +4072,7 @@ function renderCheckinGrid() {
     const photo=m.photo_url?`<img class="cc-photo" src="${m.photo_url}" onerror="this.outerHTML='<div class=\\'cc-initials\\'>${initials}</div>'">`:`<div class="cc-initials">${initials}</div>`;
     const isChild = isChildMember(m);
     const pinStatus = present ? '✅ Present' : isChild ? '👆 Tap to mark' : m.pin_hash ? '🔐 PIN set' : '⚠ No PIN';
-    const clickFn = isChild ? `markChildPresent('${m.id}')` : `openPinModal('${m.id}')`;
+    const clickFn = (isChild && !present) ? `markChildPresent('${m.id}')` : `openPinModal('${m.id}')`;
     return `<div class="checkin-card ${present?'present':''}" onclick="${clickFn}">${photo}<div class="cc-info"><div class="cc-name">${m.full_name}</div><div class="cc-dept">${m.department||'No dept'}</div><div class="cc-pin">${pinStatus}</div></div></div>`;
   }).join('');
 }
@@ -4138,35 +4113,8 @@ let pinModalMemberId=null,pinValue='',pinMode='checkin';
 async function markChildPresent(memberId){
   if(!currentSession){showToast('Please select a meeting first','error');return;}
   const m=allMembers.find(x=>x.id===memberId);if(!m)return;
-  // Already present — offer to undo (e.g. tapped by mistake)
-  if(presentSet.has(memberId)){
-    if(confirm(`Remove ${m.full_name} from attendance?\nTap OK to undo.`)){
-      await unmarkPresent(memberId);
-    }
-    return;
-  }
+  if(presentSet.has(memberId)){showToast(`${m.full_name} is already present`,'info');return;}
   await markPresent(memberId);
-}
-
-async function unmarkPresent(memberId){
-  presentSet.delete(memberId);
-  renderCheckinGrid();
-  renderPanel();
-  if(isOnline){
-    try{
-      await db.from('attendance')
-        .delete()
-        .eq('member_id', memberId)
-        .eq('date', checkinDate)
-        .eq('session', currentSession);
-    }catch(e){ console.warn('Could not remove from DB:', e); }
-  }
-  offlineQueue = offlineQueue.filter(q =>
-    !(q.member_id===memberId && q.date===checkinDate && q.session===currentSession)
-  );
-  localStorage.setItem('tph_offline_queue', JSON.stringify(offlineQueue));
-  const m=allMembers.find(x=>x.id===memberId);
-  showToast(`${m?.full_name} removed from attendance`,'info');
 }
 
 function openPinModal(memberId){
@@ -4625,6 +4573,7 @@ function renderBirthdays(){
 
 function initRegistration(){const url=window.location.href.split('?')[0]+'?register=1';const el=document.getElementById('regLinkUrl');if(el)el.textContent=url;loadPendingRegistrations();}
 function copyRegLink(){const url=window.location.href.split('?')[0]+'?register=1';navigator.clipboard.writeText(url).then(()=>showToast('Registration link copied!','success')).catch(()=>showToast('Copy the link manually','info'));}
+function openSelfRegForm(){const cn=appSettings.churchName||'The Precious House';document.getElementById('selfRegChurchName').textContent=cn;document.getElementById('selfRegSuccessChurch').textContent=cn;document.getElementById('selfRegPage').classList.add('open');document.getElementById('selfRegFormBody').style.display='block';document.getElementById('selfRegSuccess').classList.remove('show');}
 function closeSelfRegForm(){document.getElementById('selfRegPage').classList.remove('open');}
 
 
@@ -5028,6 +4977,13 @@ function updateBottomNav(page) {
 let supabaseOK = false;
 
 // Helper: returns true if member should be treated as a child (no PIN required)
+function isChildMember(m) {
+  if (!m) return false;
+  if (m.member_category === 'Child') return true;
+  const dept = (m.department || '').toLowerCase();
+  return dept.includes('child') || dept.includes('junior') || dept.includes('kids');
+}
+
 async function testSupabaseConnection() {
   try {
     const { data, error } = await db.from('members').select('id').limit(1);
@@ -5041,6 +4997,73 @@ async function testSupabaseConnection() {
 }
 
 // ── SUBMIT SELF-REGISTRATION ──
+async function submitSelfReg() {
+  const name = document.getElementById('sr_name').value.trim();
+  const phone = document.getElementById('sr_phone').value.trim();
+  const pin = document.getElementById('sr_pin')?.value || '';
+  const pinConfirm = document.getElementById('sr_pin_confirm')?.value || '';
+
+  if (!name) { showToast('Full name is required', 'error'); return; }
+  if (!phone) { showToast('Phone number is required', 'error'); return; }
+  if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+    showToast('Please set a 4-digit check-in PIN', 'error'); return;
+  }
+  if (pin !== pinConfirm) { showToast('PINs do not match', 'error'); return; }
+
+  const btn = document.querySelector('.self-reg-submit');
+  if (btn) { btn.textContent = 'Submitting...'; btn.disabled = true; }
+
+  const pinHash = await hashPin(pin);
+
+  const payload = {
+    full_name: name, phone,
+    email: document.getElementById('sr_email').value.trim() || null,
+    date_of_birth: document.getElementById('sr_dob').value || null,
+    gender: document.getElementById('sr_gender').value || null,
+    marital_status: document.getElementById('sr_marital').value || null,
+    address: document.getElementById('sr_address').value.trim() || null,
+    department: document.getElementById('sr_dept').value || null,
+    how_heard: document.getElementById('sr_source').value || null,
+    next_of_kin_name: document.getElementById('sr_kin_name').value.trim() || null,
+    next_of_kin_phone: document.getElementById('sr_kin_phone').value.trim() || null,
+    next_of_kin_relationship: document.getElementById('sr_kin_rel').value || null,
+    pin_hash: pinHash,
+    submitted_at: new Date().toISOString(),
+    status: 'pending'
+  };
+
+  let savedToSupabase = false;
+
+  // PRIMARY: Supabase — cross-device
+  try {
+    const { error } = await db.from('pending_registrations').insert([payload]);
+    if (error) {
+      console.error('Supabase insert error:', error);
+      throw error;
+    }
+    savedToSupabase = true;
+    console.log('✓ Saved to Supabase');
+  } catch(e) {
+    console.warn('Supabase save failed:', e.message || e);
+  }
+
+  // ALWAYS save to localStorage too (so offline and fallback works)
+  try {
+    const queue = JSON.parse(localStorage.getItem('tph_pending_reg') || '[]');
+    queue.push({ ...payload, id: Date.now().toString(), _savedToSupabase: savedToSupabase });
+    localStorage.setItem('tph_pending_reg', JSON.stringify(queue));
+    console.log('✓ Saved to localStorage' + (savedToSupabase ? ' (backup)' : ' (primary fallback)'));
+  } catch(e) {
+    console.warn('localStorage save failed:', e);
+  }
+
+  if (btn) { btn.textContent = 'Submit Registration →'; btn.disabled = false; }
+
+  // Always show success — we have at least localStorage
+  document.getElementById('selfRegFormBody').style.display = 'none';
+  document.getElementById('selfRegSuccess').classList.add('show');
+}
+
 // ── LOAD PENDING REGISTRATIONS ──
 async function loadPendingRegistrations() {
   const el = document.getElementById('pendingRegList');
@@ -5177,133 +5200,7 @@ async function approveAllPending() {
   if (!pending.length) { showToast('No pending registrations', 'info'); return; }
   if (!confirm(`Approve all ${pending.length} registration(s)?`)) return;
   for (const reg of pending) await approvePending(reg.id || reg.full_name + '|' + reg.phone);
-// ══════════════════════════════════════════
-// SELF-REG CATEGORY + PIN VISIBILITY + UNDO
-// ══════════════════════════════════════════
-
-function isChildMember(m) {
-  if (!m) return false;
-  if (m.member_category === 'Child') return true;
-  if (m.assisted_checkin === true) return true;
-  const dept = (m.department || '').toLowerCase();
-  return dept.includes('child') || dept.includes('junior') || dept.includes('kids');
-}
-
-function srAutoCategory() {
-  const dob = document.getElementById('sr_dob')?.value;
-  if (!dob) return;
-  const age = Math.floor((Date.now() - new Date(dob + 'T12:00:00')) / (365.25*24*3600*1000));
-  const sel = document.getElementById('sr_category');
-  if (!sel) return;
-  if (age < 13) sel.value = 'Child';
-  else if (age <= 25) sel.value = 'Youth';
-  else sel.value = 'Adult';
-  toggleSrPin();
-}
-
-function toggleSrPin() {
-  const cat = document.getElementById('sr_category')?.value;
-  const card = document.getElementById('srPinCard');
-  if (!card) return;
-  const hide = cat === 'Child';
-  card.style.display = hide ? 'none' : 'block';
-  if (hide) {
-    ['sr_pin','sr_pin_confirm'].forEach(id => { const e=document.getElementById(id); if(e)e.value=''; });
-  }
-}
-
-function toggleMemberPinField() {
-  const cat = document.getElementById('f_category')?.value;
-  const row = document.getElementById('memberPinRow');
-  if (row) row.style.display = (cat === 'Child') ? 'none' : '';
-}
-
-// Wrap openSelfRegForm to reset PIN visibility
-function openSelfRegForm() {
-  const cn = appSettings.churchName || 'The Precious House';
-  const scn = document.getElementById('selfRegChurchName');
-  const scs = document.getElementById('selfRegSuccessChurch');
-  if (scn) scn.textContent = cn;
-  if (scs) scs.textContent = cn;
-  document.getElementById('selfRegPage').classList.add('open');
-  document.getElementById('selfRegFormBody').style.display = 'block';
-  document.getElementById('selfRegSuccess').classList.remove('show');
-  // Reset form state
-  const cat = document.getElementById('sr_category');
-  if (cat) cat.value = 'Adult';
-  const card = document.getElementById('srPinCard');
-  if (card) card.style.display = 'block';
-}
-
   showToast(`All ${pending.length} registrations approved`, 'success');
-}
-
-
-async function submitSelfReg(){
-  const name = document.getElementById('sr_name').value.trim();
-  const phone = document.getElementById('sr_phone').value.trim();
-  const cat = document.getElementById('sr_category')?.value || 'Adult';
-  const pin = document.getElementById('sr_pin')?.value || '';
-  const pinConfirm = document.getElementById('sr_pin_confirm')?.value || '';
-
-  if (!name) { showToast('Full name is required', 'error'); return; }
-  if (!phone) { showToast('Phone number is required', 'error'); return; }
-
-  // PIN only required for non-children
-  if (cat !== 'Child') {
-    if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-      showToast('Please set a 4-digit check-in PIN', 'error'); return;
-    }
-    if (pin !== pinConfirm) { showToast('PINs do not match', 'error'); return; }
-  }
-
-  const btn = document.querySelector('.self-reg-submit');
-  if (btn) { btn.textContent = 'Submitting...'; btn.disabled = true; }
-
-  const pinHash = (cat !== 'Child' && pin) ? await hashPin(pin) : null;
-
-  const payload = {
-    full_name: name, phone,
-    email: document.getElementById('sr_email').value.trim() || null,
-    date_of_birth: document.getElementById('sr_dob').value || null,
-    gender: document.getElementById('sr_gender').value || null,
-    marital_status: document.getElementById('sr_marital').value || null,
-    address: document.getElementById('sr_address').value.trim() || null,
-    department: document.getElementById('sr_dept').value || null,
-    how_heard: document.getElementById('sr_source').value || null,
-    next_of_kin_name: document.getElementById('sr_kin_name').value.trim() || null,
-    next_of_kin_phone: document.getElementById('sr_kin_phone').value.trim() || null,
-    next_of_kin_relationship: document.getElementById('sr_kin_rel').value || null,
-    pin_hash: pinHash,
-    member_category: cat,
-    submitted_at: new Date().toISOString(),
-    status: 'pending'
-  };
-
-  let saved = false;
-  try {
-    const { error } = await db.from('pending_registrations').insert([payload]);
-    if (!error) { saved = true; console.log('✓ Saved to Supabase'); }
-    else console.error('Supabase error:', error);
-  } catch(e) { console.warn('Supabase save failed:', e.message); }
-
-  if (!saved) {
-    try {
-      const queue = JSON.parse(localStorage.getItem('tph_pending_reg') || '[]');
-      queue.push({ ...payload, id: Date.now().toString() });
-      localStorage.setItem('tph_pending_reg', JSON.stringify(queue));
-      saved = true;
-    } catch(e) {}
-  }
-
-  if (btn) { btn.textContent = 'Submit Registration →'; btn.disabled = false; }
-
-  if (saved) {
-    document.getElementById('selfRegFormBody').style.display = 'none';
-    document.getElementById('selfRegSuccess').classList.add('show');
-  } else {
-    showToast('Submission failed. Please check your connection and try again.', 'error');
-  }
 }
 
 </script>
@@ -5325,15 +5222,8 @@ async function submitSelfReg(){
           <div class="form-group full"><label class="form-label">Full Name *</label><input class="form-input" id="sr_name" placeholder="Your full name"></div>
           <div class="form-group"><label class="form-label">Phone Number *</label><input class="form-input" id="sr_phone" placeholder="08012345678" type="tel"></div>
           <div class="form-group"><label class="form-label">Email Address</label><input class="form-input" id="sr_email" placeholder="you@email.com" type="email"></div>
-          <div class="form-group"><label class="form-label">Date of Birth</label><input class="form-input" id="sr_dob" type="date" onchange="srAutoCategory()"></div>
+          <div class="form-group"><label class="form-label">Date of Birth</label><input class="form-input" id="sr_dob" type="date"></div>
           <div class="form-group"><label class="form-label">Gender</label><select class="form-select" id="sr_gender"><option value="">Select...</option><option>Male</option><option>Female</option></select></div>
-          <div class="form-group"><label class="form-label">Member Category</label>
-            <select class="form-select" id="sr_category" onchange="toggleSrPin()">
-              <option value="Adult">Adult</option>
-              <option value="Youth">Youth (13–25)</option>
-              <option value="Child">Child (under 13)</option>
-            </select>
-          </div>
           <div class="form-group"><label class="form-label">Marital Status</label><select class="form-select" id="sr_marital"><option value="">Select...</option><option>Single</option><option>Married</option><option>Widowed</option><option>Divorced</option></select></div>
           <div class="form-group full"><label class="form-label">Home Address</label><input class="form-input" id="sr_address" placeholder="Street, City"></div>
         </div>
@@ -5369,9 +5259,9 @@ async function submitSelfReg(){
         </div>
       </div>
 
-      <div class="self-reg-card" id="srPinCard">
+      <div class="self-reg-card">
         <div class="form-section-title" style="font-size:0.95rem">🔐 Check-in PIN</div>
-        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px">Choose a 4-digit PIN you'll use to mark your attendance every meeting.</p>
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px">Choose a 4-digit PIN you'll use to mark your attendance every Sunday.</p>
         <div class="form-grid" style="margin-top:0">
           <div class="form-group">
             <label class="form-label">4-Digit PIN *</label>
