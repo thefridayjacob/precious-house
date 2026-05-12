@@ -6,7 +6,7 @@
 <title>The Precious House — Member Registry</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&family=Lexend+Deca:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
@@ -2611,9 +2611,6 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
               </div>
             </div>
             <div class="checkin-grid" id="checkinGrid">
-              <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--warm-gray)">
-                <div class="spinner" style="margin:0 auto 12px"></div>Loading members...
-              </div>
             </div>
           </div>
 
@@ -3464,7 +3461,19 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
 // ── SUPABASE ──
 const SUPA_URL = 'https://gqjwixdtptkaccnonpab.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxandpeGR0cHRrYWNjbm9ucGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTM3NDMsImV4cCI6MjA5MzQ2OTc0M30.TwWkRu4rx0PIfF0lhmZyfJw2l1SP2ZEYpWGejkxLigk';
-const db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+// Guard: if Supabase CDN failed to load, create a safe stub so app doesn't crash
+let db;
+if (window.supabase && typeof window.supabase.createClient === 'function') {
+  db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+} else {
+  console.error('Supabase library failed to load. Check network connection.');
+  // Safe stub — all DB calls will fail gracefully with error handling
+  const noop = () => ({ data: null, error: { message: 'Supabase not loaded' } });
+  const stub = () => ({ select: stub, insert: noop, update: stub, delete: stub, 
+    upsert: noop, order: stub, limit: stub, eq: stub, neq: stub, gte: stub,
+    in: stub, single: noop, then: (cb) => cb({ data: null, error: { message: 'Supabase not loaded' } }) });
+  db = { from: () => stub(), storage: { from: () => ({ upload: noop, getPublicUrl: () => ({ data: { publicUrl: '' } }) }) } };
+}
 
 // ── STATE ──
 let allMembers = [];
@@ -3990,12 +3999,16 @@ let presentSet = new Set();
 let offlineQueue = JSON.parse(localStorage.getItem('tph_offline_queue') || '[]');
 let isOnline = navigator.onLine;
 
-function initCheckin() {
+async function initCheckin() {
   checkinDate = new Date().toISOString().split('T')[0];
   const picker = document.getElementById('checkinDatePicker');
   if (picker) picker.value = checkinDate;
   updateOnlineStatus();
+  // Load members if not already loaded
+  if (!allMembers.length) await loadMembers();
   populateMeetingSelect(checkinDate);
+  renderCheckinGrid();
+  renderPanel();
 }
 
 function populateMeetingSelect(dateStr) {
