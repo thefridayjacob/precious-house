@@ -2336,6 +2336,16 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
   .mobile-bottom-nav { display: flex; }
   .page-content { padding-bottom: 88px; }
 }
+/* ── VISITOR + GROUP CARDS ── */
+.visitor-card { display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer; }
+.visitor-card:hover { background:rgba(26,31,94,0.02); }
+
+/* ── CHECKIN TABS ── */
+#ci-members, #ci-visitors, #ci-guests { animation: fadeIn 0.2s ease; }
+
+/* ── GROUP DETAIL ── */
+.group-task-row { display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border); }
+
 </style>
 </head>
 <body>
@@ -2598,6 +2608,15 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
           </div>
         </div>
 
+        <!-- Check-in tab bar -->
+        <div style="display:flex;gap:6px;margin-bottom:14px;background:white;padding:6px;border-radius:10px;border:1.5px solid var(--border)">
+          <button class="settings-nav-btn active" id="ci-tab-members" onclick="switchCheckinTab('members',this)">👥 Members</button>
+          <button class="settings-nav-btn" id="ci-tab-visitors" onclick="switchCheckinTab('visitors',this)">🙋 Visitors</button>
+          <button class="settings-nav-btn" id="ci-tab-guests" onclick="switchCheckinTab('guests',this)">👤 Guest Count</button>
+        </div>
+
+        <!-- MEMBERS TAB -->
+        <div id="ci-members">
         <div class="checkin-shell">
           <!-- Left: member grid -->
           <div>
@@ -2647,6 +2666,56 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
             </div>
           </div>
         </div>
+      </div><!-- /ci-members -->
+
+        <!-- VISITORS TAB -->
+        <div id="ci-visitors" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+            <div style="font-size:0.82rem;color:var(--muted)">Log visitors attending today's service</div>
+            <button class="btn btn-primary" onclick="openAddVisitorModal()">+ Log Visitor</button>
+          </div>
+          <div id="visitorsList">
+            <div class="rc-empty">No visitors logged yet for this session.</div>
+          </div>
+        </div>
+
+        <!-- GUEST COUNT TAB -->
+        <div id="ci-guests" style="display:none">
+          <div class="report-card" style="margin-bottom:0">
+            <div class="rc-header">
+              <div>
+                <div class="rc-title">👤 Guest Headcount</div>
+                <div class="rc-sub" id="guestCountSession">Select a session above first</div>
+              </div>
+              <button class="btn btn-ghost" style="font-size:0.8rem" onclick="saveGuestCount()">Save Count</button>
+            </div>
+            <div class="rc-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                <div style="text-align:center">
+                  <div style="font-size:0.72rem;font-weight:600;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px">Adult Guests</div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:12px">
+                    <button onclick="adjustGuest('adults',-1)" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--border);background:white;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--navy)">−</button>
+                    <div id="guestAdults" style="font-family:'Lexend',sans-serif;font-size:2rem;font-weight:700;color:var(--navy);min-width:40px;text-align:center">0</div>
+                    <button onclick="adjustGuest('adults',1)" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--navy);background:var(--navy);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white">+</button>
+                  </div>
+                </div>
+                <div style="text-align:center">
+                  <div style="font-size:0.72rem;font-weight:600;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px">Child Guests</div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:12px">
+                    <button onclick="adjustGuest('children',-1)" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--border);background:white;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--navy)">−</button>
+                    <div id="guestChildren" style="font-family:'Lexend',sans-serif;font-size:2rem;font-weight:700;color:var(--green);min-width:40px;text-align:center">0</div>
+                    <button onclick="adjustGuest('children',1)" style="width:36px;height:36px;border-radius:50%;border:2px solid var(--green);background:var(--green);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white">+</button>
+                  </div>
+                </div>
+              </div>
+              <div id="guestCountHistory" style="border-top:1px solid var(--border);padding-top:14px">
+                <div style="font-size:0.72rem;font-weight:600;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px">Today's Sessions</div>
+                <div id="guestCountList"><div class="rc-empty">No guest counts recorded yet.</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- REPORTS PAGE -->
@@ -2713,6 +2782,76 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
             </div>
             <div class="rc-body" id="followupList">
               <div class="rc-empty"><div class="spinner" style="margin:0 auto 8px"></div>Loading...</div>
+            </div>
+          </div>
+
+          <!-- Critical Absence Tiers -->
+          <div class="report-card">
+            <div class="rc-header">
+              <div>
+                <div class="rc-title">🚦 Absence Tiers</div>
+                <div class="rc-sub">Members ranked by consecutive absences</div>
+              </div>
+            </div>
+            <div class="rc-body" id="absenceTiersList">
+              <div class="rc-empty">Load reports to see absence tiers.</div>
+            </div>
+          </div>
+
+          <!-- Top Attendees -->
+          <div class="report-card">
+            <div class="rc-header">
+              <div>
+                <div class="rc-title">🏅 Top Attendees</div>
+                <div class="rc-sub">Best attendance this period · <span id="topAttendeesMonth"></span></div>
+              </div>
+            </div>
+            <div class="rc-body" id="topAttendeesList">
+              <div class="rc-empty">Load reports to see top attendees.</div>
+            </div>
+          </div>
+
+          <!-- Member of the Month -->
+          <div class="report-card">
+            <div class="rc-header">
+              <div>
+                <div class="rc-title">⭐ Member of the Month</div>
+                <div class="rc-sub" id="motmPeriod">Best attendance this period</div>
+              </div>
+              <button class="rc-action" onclick="shareMOTM()">💬 Share</button>
+            </div>
+            <div class="rc-body" id="motmContent">
+              <div class="rc-empty">Load reports to see member of the month.</div>
+            </div>
+          </div>
+
+          <!-- Department Health -->
+          <div class="report-card">
+            <div class="rc-header">
+              <div>
+                <div class="rc-title">🏛 Department Health</div>
+                <div class="rc-sub">Attendance rate per department</div>
+              </div>
+            </div>
+            <div class="rc-body" id="deptHealthList">
+              <div class="rc-empty">Load reports to see department health.</div>
+            </div>
+          </div>
+
+          <!-- Member Spotlight -->
+          <div class="report-card">
+            <div class="rc-header">
+              <div>
+                <div class="rc-title">🔍 Member Spotlight</div>
+                <div class="rc-sub">Search any member to see their attendance profile</div>
+              </div>
+            </div>
+            <div class="rc-body">
+              <div style="display:flex;gap:8px;margin-bottom:14px">
+                <input class="form-input" id="spotlightSearch" placeholder="Search member name..." style="flex:1" oninput="searchMemberSpotlight()">
+              </div>
+              <div id="spotlightResults"></div>
+              <div id="spotlightProfile" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px"></div>
             </div>
           </div>
 
@@ -2896,6 +3035,16 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
       <!-- COMMUNICATIONS PAGE -->
       <div class="page" id="page-comms">
 
+        <!-- Comms Tab Bar -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;background:white;padding:6px;border-radius:10px;border:1.5px solid var(--border)">
+          <button class="settings-nav-btn active" id="comms-tab-messages" onclick="switchCommsTab('messages',this)">💬 Messages</button>
+          <button class="settings-nav-btn" id="comms-tab-groups" onclick="switchCommsTab('groups',this)">👥 Groups</button>
+          <button class="settings-nav-btn" id="comms-tab-report" onclick="switchCommsTab('report',this)">📋 Weekly Report</button>
+          <button class="settings-nav-btn" id="comms-tab-log" onclick="switchCommsTab('log',this)">📬 Send Log</button>
+        </div>
+
+        <!-- MESSAGES TAB -->
+        <div id="comms-messages">
         <!-- Row 1: Bulk Dept Message + Follow-up Templates -->
         <div class="comms-grid">
 
@@ -2988,7 +3137,40 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
           </div>
         </div>
 
-        <!-- Row 2: Monday Report + Send Log -->
+        <!-- Row 2: First Timer Follow-up -->
+        <div class="comms-grid" style="margin-top:16px">
+          <div class="comms-card">
+            <div class="comms-card-header">
+              <div>
+                <div class="comms-card-title">🌱 First Timer Follow-up</div>
+                <div class="comms-card-sub">First timers who joined 3+ weeks ago and haven't returned</div>
+              </div>
+              <button class="btn btn-ghost" style="font-size:0.8rem;padding:6px 10px" onclick="loadFirstTimerFollowup()">Refresh</button>
+            </div>
+            <div class="comms-card-body">
+              <div style="max-height:260px;overflow-y:auto;border:1.5px solid var(--border);border-radius:8px;padding:8px" id="firstTimerFollowupList">
+                <div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:16px">Loading...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        </div><!-- /comms-messages -->
+
+        <!-- GROUPS TAB -->
+        <div id="comms-groups" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+            <div style="font-size:0.84rem;color:var(--muted)">Temporary groups for projects, events and teams</div>
+            <button class="btn btn-primary" onclick="openCreateGroupModal()">+ New Group</button>
+          </div>
+          <div id="groupsList">
+            <div class="rc-empty">No groups yet. Create one to get started.</div>
+          </div>
+        </div>
+
+        <!-- REPORT + LOG TABS (shown separately via tab switching) -->
+        <div id="comms-report-log">
+        <!-- Row 2: Weekly Report + Send Log -->
         <div class="comms-grid">
 
           <!-- Monday Report -->
@@ -3024,6 +3206,12 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
             </div>
           </div>
 
+        </div><!-- /comms-report -->
+
+        </div><!-- /comms-report-log -->
+
+        <!-- SEND LOG TAB -->
+        <div id="comms-log" style="display:none">
           <!-- Send Log -->
           <div class="comms-card">
             <div class="comms-card-header">
@@ -3038,6 +3226,8 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
             </div>
           </div>
         </div>
+
+        </div><!-- /comms-log -->
 
       </div>
 
@@ -3325,7 +3515,7 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
         <div class="form-group full"><label class="form-label">Full Name *</label><input class="form-input" id="f_name" placeholder="e.g. Favour Okonkwo"></div>
         <div class="form-group"><label class="form-label">Phone Number</label><input class="form-input" id="f_phone" placeholder="08012345678" type="tel"></div>
         <div class="form-group"><label class="form-label">Email Address</label><input class="form-input" id="f_email" placeholder="favour@email.com" type="email"></div>
-        <div class="form-group"><label class="form-label">Date of Birth</label><input class="form-input" id="f_dob" type="date"></div>
+        <div class="form-group"><label class="form-label">Date of Birth</label><input class="form-input" id="f_dob" type="date" onchange="suggestMemberCategory()"></div>
         <div class="form-group"><label class="form-label">Gender</label><select class="form-select" id="f_gender"><option value="">Select...</option><option>Male</option><option>Female</option></select></div>
         <div class="form-group"><label class="form-label">Marital Status</label><select class="form-select" id="f_marital"><option value="">Select...</option><option>Single</option><option>Married</option><option>Widowed</option><option>Divorced</option></select></div>
         <div class="form-group full"><label class="form-label">Home Address</label><input class="form-input" id="f_address" placeholder="Street, City"></div>
@@ -3333,23 +3523,29 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
       <div class="form-section-title">⛪ Church Information</div>
       <div class="form-grid">
         <div class="form-group"><label class="form-label">Department / Unit</label>
-          <select class="form-select" id="f_dept">
-            <option value="">Select Department...</option>
-            <option>Choir</option><option>Ushers</option><option>Media & Tech</option>
-            <option>Children's Church</option><option>Youth</option><option>Women's Fellowship</option>
-            <option>Men's Fellowship</option><option>Protocol</option><option>Prayer Team</option>
-            <option>Workers</option><option>General Member</option>
+          <select class="form-select" id="f_dept" multiple style="height:120px;padding:6px">
+            <option>Choir</option>
+            <option>Ushers</option>
+            <option>Media & Tech</option>
+            <option>Children's Church</option>
+            <option>Youth</option>
+            <option>Women's Fellowship</option>
+            <option>Men's Fellowship</option>
+            <option>Protocol</option>
+            <option>Prayer Team</option>
+            <option>General Member</option>
           </select>
+          <div style="font-size:0.7rem;color:var(--muted);margin-top:4px">Hold Ctrl / Cmd to select multiple departments</div>
         </div>
         <div class="form-group"><label class="form-label">Date Joined</label><input class="form-input" id="f_joined" type="date"></div>
         <div class="form-group"><label class="form-label">Member Type</label>
-          <select class="form-select" id="f_type">
-            <option value="">Select...</option><option>Regular Member</option><option>Worker</option>
+          <select class="form-select" id="f_type" onchange="checkFirstTimerFlag()">
+            <option value="">Select...</option><option>Regular Member</option>
             <option>Pastor / Clergy</option><option>Deacon / Deaconess</option><option>First Timer</option>
           </select>
         </div>
         <div class="form-group"><label class="form-label">Member Category *</label>
-          <select class="form-select" id="f_category">
+          <select class="form-select" id="f_category" onchange="toggleMemberPinField()">
             <option value="Adult">Adult</option>
             <option value="Youth">Youth</option>
             <option value="Child">Child</option>
@@ -3357,7 +3553,7 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
         </div>
         <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="f_status"><option value="true">Active</option><option value="false">Inactive</option></select></div>
       </div>
-      <div class="form-section-title">🔐 Check-in PIN</div>
+      <div id="memberPinRow"><div class="form-section-title">🔐 Check-in PIN</div>
       <div class="form-grid">
         <div class="form-group"><label class="form-label">4-Digit PIN</label>
           <div class="pin-setup-wrap">
@@ -3367,6 +3563,7 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
         </div>
         <div class="form-group"><label class="form-label">Confirm PIN</label><input class="form-input pin-setup-input" id="f_pin_confirm" type="password" maxlength="4" placeholder="••••" inputmode="numeric"></div>
       </div>
+      </div><!-- /memberPinRow -->
       <div class="form-section-title">🤝 Next of Kin</div>
       <div class="form-grid">
         <div class="form-group"><label class="form-label">Next of Kin Name</label><input class="form-input" id="f_kin_name" placeholder="Full name"></div>
@@ -3394,11 +3591,12 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
       <button class="modal-close" onclick="closeModal('profileModal')">✕</button>
     </div>
     <div class="modal-body" id="profileContent"></div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
       <button class="btn btn-danger" id="profileDeleteBtn">Delete Member</button>
       <button class="btn btn-ghost" onclick="closeModal('profileModal')">Close</button>
       <button class="btn btn-ghost" id="profileSetPinBtn">🔐 Set PIN</button>
-      <button class="btn btn-primary" id="profileEditBtn">Edit Member</button>
+      <button class="btn btn-ghost" id="profileAttendanceBtn">📊 Attendance</button>
+      <button class="btn btn-primary" id="profileEditBtn">✏️ Edit</button>
     </div>
   </div>
 </div>
@@ -3453,7 +3651,14 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
 // ── SUPABASE ──
 const SUPA_URL = 'https://gqjwixdtptkaccnonpab.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxandpeGR0cHRrYWNjbm9ucGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTM3NDMsImV4cCI6MjA5MzQ2OTc0M30.TwWkRu4rx0PIfF0lhmZyfJw2l1SP2ZEYpWGejkxLigk';
-const db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+let db;
+if (window.supabase && typeof window.supabase.createClient === 'function') {
+  db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+} else {
+  console.error('Supabase library failed to load — check network/CDN');
+  const chain = () => { const o = { select:()=>o, insert:()=>Promise.resolve({data:null,error:{message:'Supabase not loaded'}}), update:()=>o, delete:()=>o, upsert:()=>Promise.resolve({data:null,error:{message:'Supabase not loaded'}}), eq:()=>o, neq:()=>o, gte:()=>o, in:()=>o, order:()=>o, limit:()=>o, single:()=>Promise.resolve({data:null,error:{message:'Supabase not loaded'}}), then:(cb)=>Promise.resolve(cb({data:null,error:{message:'Supabase not loaded'}})) }; return o; };
+  db = { from: () => chain(), storage: { from: () => ({ upload: () => Promise.resolve({data:null,error:null}), getPublicUrl: () => ({data:{publicUrl:''}}) }) } };
+}
 
 // ── STATE ──
 let allMembers = [];
@@ -3469,8 +3674,17 @@ let activityLog = JSON.parse(localStorage.getItem('tph_activity_log') || '[]');
 let currentUser = null;
 let sendLog = JSON.parse(localStorage.getItem('tph_send_log') || '[]');
 
-function saveSettings() { localStorage.setItem('tph_settings', JSON.stringify(appSettings)); }
-function saveUsers() { localStorage.setItem('tph_users', JSON.stringify(appUsers)); }
+function saveSettings() {
+  localStorage.setItem('tph_settings', JSON.stringify(appSettings));
+  db.from('app_config').upsert({ key: 'app_settings', value: appSettings, updated_at: new Date().toISOString() }, { onConflict: 'key' }).catch(()=>{});
+}
+function saveUsers() {
+  localStorage.setItem('tph_users', JSON.stringify(appUsers));
+  // Sync to Supabase so any device can log in
+  db.from('app_users').delete().neq('username','__none__').then(() => {
+    if (appUsers.length) db.from('app_users').insert(appUsers).then(()=>{});
+  }).catch(()=>{});
+}
 function saveActivityLog() { localStorage.setItem('tph_activity_log', JSON.stringify(activityLog)); }
 
 // ── MEETING TYPES ──
@@ -3484,7 +3698,10 @@ const DEFAULT_MEETINGS = [
 ];
 let meetingTypes = JSON.parse(localStorage.getItem('tph_meeting_types') || 'null');
 if (!meetingTypes) { meetingTypes = DEFAULT_MEETINGS; localStorage.setItem('tph_meeting_types', JSON.stringify(meetingTypes)); }
-function saveMeetingTypes() { localStorage.setItem('tph_meeting_types', JSON.stringify(meetingTypes)); }
+function saveMeetingTypes() {
+  localStorage.setItem('tph_meeting_types', JSON.stringify(meetingTypes));
+  db.from('app_config').upsert({ key: 'meeting_types', value: meetingTypes, updated_at: new Date().toISOString() }, { onConflict: 'key' }).catch(()=>{});
+}
 function formatTime(t) {
   if (!t) return '';
   const [h, m] = t.split(':');
@@ -3497,6 +3714,14 @@ async function doLogin() {
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value;
   if (!u || !p) { showToast('Enter username and password', 'error'); return; }
+  // Load users from Supabase so volunteer accounts work on any device
+  try {
+    const { data } = await db.from('app_users').select('*');
+    if (data && data.length) {
+      appUsers = data;
+      localStorage.setItem('tph_users', JSON.stringify(appUsers));
+    }
+  } catch(e) { /* use localStorage fallback */ }
   const hashed = await hashPin(p);
   const found = appUsers.find(usr => usr.username === u && usr.passHash === hashed);
   const masterPass = appSettings.masterPass || 'precious2024';
@@ -3518,7 +3743,30 @@ async function doLogin() {
   logActivity((currentUser.displayName || currentUser.username) + ' logged in', 'info');
   // Persist session across refreshes
   sessionStorage.setItem('tph_session', JSON.stringify(currentUser));
+  await loadAppConfig();
   loadMembers();
+}
+
+async function loadAppConfig() {
+  try {
+    const { data } = await db.from('app_config').select('key,value').in('key', ['app_settings','meeting_types']);
+    if (!data) return;
+    for (const row of data) {
+      if (row.key === 'app_settings' && row.value) {
+        appSettings = { ...appSettings, ...row.value };
+        localStorage.setItem('tph_settings', JSON.stringify(appSettings));
+        if (appSettings.churchName) {
+          const brand = document.querySelector('.sidebar-brand .brand-name');
+          if (brand) brand.textContent = appSettings.churchName;
+          document.title = appSettings.churchName + ' — Attendance';
+        }
+      }
+      if (row.key === 'meeting_types' && Array.isArray(row.value) && row.value.length) {
+        meetingTypes = row.value;
+        localStorage.setItem('tph_meeting_types', JSON.stringify(meetingTypes));
+      }
+    }
+  } catch(e) {}
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -3559,7 +3807,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.title = appSettings.churchName + ' — Attendance';
       }
       applyRoleRestrictions(currentUser.role);
-      loadMembers();
+      loadAppConfig().then(() => loadMembers());
     } catch(e) {
       sessionStorage.removeItem('tph_session');
     }
@@ -3627,7 +3875,7 @@ function showPage(name, btn) {
     if (window.innerWidth <= 768) closeSidebar();
 
     // Init page content slightly deferred so page transition paints first
-    const inits = { checkin: initCheckin, reports: loadReports, departments: initDepartments, settings: initSettings, birthdays: initBirthdays, registration: initRegistration, comms: initComms };
+    const inits = { checkin: ()=>{ initCheckin(); document.getElementById('ci-members')&&(document.getElementById('ci-members').style.display='block');['ci-visitors','ci-guests'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';}); document.querySelectorAll('#page-checkin .settings-nav-btn').forEach(b=>b.classList.remove('active')); const mb=document.getElementById('ci-tab-members'); if(mb)mb.classList.add('active'); }, reports: loadReports, departments: initDepartments, settings: initSettings, birthdays: initBirthdays, registration: initRegistration, comms: initComms };
     if (inits[name]) setTimeout(() => inits[name](), 50);
   });
 }
@@ -3653,6 +3901,7 @@ async function loadMembers() {
     allMembers = data || [];
     filteredMembers = [...allMembers];
     renderMemberStats(); renderMemberTable(); populateDeptFilter(); updateBirthdayBadge();
+    checkBirthdaysOnLogin();
   } catch (err) { showToast('Failed to load members: ' + err.message, 'error'); }
   setLoading(false);
 }
@@ -3691,7 +3940,10 @@ function updateBirthdayBadge() {
 }
 
 function populateDeptFilter() {
-  const depts = [...new Set(allMembers.map(m => m.department).filter(Boolean))].sort();
+  // Handle comma-separated multi-departments
+  const depts = [...new Set(
+    allMembers.flatMap(m => m.department ? m.department.split(',').map(d=>d.trim()) : []).filter(Boolean)
+  )].sort();
   const sel = document.getElementById('deptFilter');
   if (sel) sel.innerHTML = '<option value="">All Departments</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
 }
@@ -3703,7 +3955,7 @@ function filterMembers() {
   const category = document.getElementById('categoryFilter')?.value || '';
   filteredMembers = allMembers.filter(m => {
     const matchQ = !q || m.full_name?.toLowerCase().includes(q) || m.phone?.includes(q) || m.member_id?.toLowerCase().includes(q);
-    const matchDept = !dept || m.department === dept;
+    const matchDept = !dept || (m.department||'').split(',').map(d=>d.trim()).includes(dept);
     const matchStatus = status === '' || String(m.is_active) === status;
     const matchCat = !category || (m.member_category || 'Adult') === category;
     return matchQ && matchDept && matchStatus && matchCat;
@@ -3821,7 +4073,7 @@ function openEditModal(id) {
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v||'';};
   set('f_name',m.full_name); set('f_phone',m.phone); set('f_email',m.email);
   set('f_dob',m.date_of_birth); set('f_gender',m.gender); set('f_marital',m.marital_status);
-  set('f_address',m.address); set('f_dept',m.department); set('f_joined',m.date_joined);
+  set('f_address',m.address); (()=>{ const dEl=document.getElementById('f_dept'); if(dEl&&m.department){ const ds=m.department.split(',').map(d=>d.trim()); Array.from(dEl.options).forEach(o=>{ o.selected=ds.includes(o.value); }); }})(); set('f_joined',m.date_joined);
   set('f_type',m.member_type); set('f_category',m.member_category||'Adult');
   set('f_status',String(m.is_active!==false));
   set('f_kin_name',m.next_of_kin_name); set('f_kin_phone',m.next_of_kin_phone); set('f_kin_rel',m.next_of_kin_relationship);
@@ -3832,7 +4084,8 @@ function openEditModal(id) {
 
 function clearForm() {
   ['f_name','f_phone','f_email','f_dob','f_address','f_joined','f_kin_name','f_kin_phone','f_pin','f_pin_confirm'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-  ['f_gender','f_marital','f_dept','f_type','f_kin_rel'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['f_gender','f_marital','f_type','f_kin_rel'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const deptEl=document.getElementById('f_dept');if(deptEl)Array.from(deptEl.options).forEach(o=>o.selected=false);
   const fc=document.getElementById('f_category'); if(fc) fc.value='Adult';
   const fs=document.getElementById('f_status'); if(fs) fs.value='true';
 }
@@ -3857,7 +4110,7 @@ async function saveMember() {
       full_name:name, phone:document.getElementById('f_phone').value.trim()||null,
       email:document.getElementById('f_email').value.trim()||null, date_of_birth:document.getElementById('f_dob').value||null,
       gender:document.getElementById('f_gender').value||null, marital_status:document.getElementById('f_marital').value||null,
-      address:document.getElementById('f_address').value.trim()||null, department:document.getElementById('f_dept').value||null,
+      address:document.getElementById('f_address').value.trim()||null, department:Array.from(document.getElementById('f_dept')?.selectedOptions||[]).map(o=>o.value).filter(Boolean).join(', ')||null,
       date_joined:document.getElementById('f_joined').value||null, member_type:document.getElementById('f_type').value||null,
       member_category:document.getElementById('f_category')?.value||'Adult',
       is_active:document.getElementById('f_status').value==='true',
@@ -3909,6 +4162,8 @@ function viewProfile(id) {
   document.getElementById('profileEditBtn').onclick=()=>{closeModal('profileModal');openEditModal(id);};
   document.getElementById('profileDeleteBtn').onclick=()=>deleteMember(id,m.full_name);
   document.getElementById('profileSetPinBtn').onclick=()=>{closeModal('profileModal');openSetPinModal(id);};
+  document.getElementById('profileAttendanceBtn').onclick=()=>{ currentProfileMemberId=id; openMemberAttendanceProfile(); };
+  currentProfileMemberId = id;
   openModal('profileModal');
 }
 
@@ -4113,8 +4368,31 @@ let pinModalMemberId=null,pinValue='',pinMode='checkin';
 async function markChildPresent(memberId){
   if(!currentSession){showToast('Please select a meeting first','error');return;}
   const m=allMembers.find(x=>x.id===memberId);if(!m)return;
-  if(presentSet.has(memberId)){showToast(`${m.full_name} is already present`,'info');return;}
+  if(presentSet.has(memberId)){
+    if(confirm(`Remove ${m.full_name} from attendance? Tap OK to undo.`)){
+      await unmarkPresent(memberId);
+    }
+    return;
+  }
   await markPresent(memberId);
+}
+
+async function unmarkPresent(memberId){
+  presentSet.delete(memberId);
+  renderCheckinGrid();
+  renderPanel();
+  if(isOnline){
+    try{
+      await db.from('attendance').delete()
+        .eq('member_id',memberId)
+        .eq('date',checkinDate)
+        .eq('session',currentSession);
+    }catch(e){ console.warn('Could not remove from DB:',e); }
+  }
+  offlineQueue=offlineQueue.filter(q=>!(q.member_id===memberId&&q.date===checkinDate&&q.session===currentSession));
+  localStorage.setItem('tph_offline_queue',JSON.stringify(offlineQueue));
+  const m=allMembers.find(x=>x.id===memberId);
+  showToast(`${m?.full_name} removed from attendance`,'info');
 }
 
 function openPinModal(memberId){
@@ -4163,6 +4441,9 @@ async function markPresent(memberId){
   if(isOnline){try{await db.from('attendance').upsert({...record,synced:true},{onConflict:'member_id,date,session'});}catch(e){queueOffline(record);}}
   else{queueOffline(record);}
   const m=allMembers.find(x=>x.id===memberId);showToast(`${m?.full_name} checked in ✓`,'success');
+  checkStreakAlerts(memberId);
+  checkFirstTimerWelcome(memberId);
+  setTimeout(checkAbsenceStreaks, 2000);
 }
 function queueOffline(record){offlineQueue=offlineQueue.filter(q=>!(q.member_id===record.member_id&&q.date===record.date&&q.session===record.session));offlineQueue.push(record);localStorage.setItem('tph_offline_queue',JSON.stringify(offlineQueue));updateOnlineStatus();}
 async function syncOfflineQueue(){
@@ -4186,15 +4467,27 @@ async function saveSetPin(){
 // PHASE 3 — REPORTS
 // ══════════════════════════════════════════
 let allAttendance=[],reportSundays=[],memberStats=[],leaderboardShowAll=false;
+let recentlyActiveIds=new Set(),everAttendedBeforeIds=new Set();
 
 async function loadReports() {
   const sessionFilter=document.getElementById('reportSession')?.value||'';
   const weeks=parseInt(document.getElementById('reportRange')?.value||'4');
   const since=new Date();since.setDate(since.getDate()-weeks*7);
+  const ninetyAgo=new Date();ninetyAgo.setDate(ninetyAgo.getDate()-90);
+  const ninetyAgoStr=ninetyAgo.toISOString().split('T')[0];
   try{let q=db.from('attendance').select('*').gte('date',since.toISOString().split('T')[0]).order('date',{ascending:false});if(sessionFilter)q=q.eq('session',sessionFilter);const{data,error}=await q;if(error)throw error;allAttendance=data||[];}
   catch(e){showToast('Could not load attendance: '+e.message,'error');allAttendance=[];}
+  // Load lapsed detection sets in parallel
+  try {
+    const [{data:r90},{data:rOld}]=await Promise.all([
+      db.from('attendance').select('member_id').gte('date',ninetyAgoStr),
+      db.from('attendance').select('member_id').lt('date',ninetyAgoStr)
+    ]);
+    recentlyActiveIds=new Set((r90||[]).map(r=>r.member_id));
+    everAttendedBeforeIds=new Set((rOld||[]).map(r=>r.member_id));
+  } catch(e) {}
   const dateSet=new Set(allAttendance.map(r=>r.date));reportSundays=[...dateSet].sort();
-  computeMemberStats(sessionFilter);renderSummaryStats();renderFollowupList();renderLeaderboard();renderSessionBreakdown();renderRecentSundays();renderConsistencyTable();populateConsistencyDeptFilter();populateReportSessionFilter();
+  computeMemberStats(sessionFilter);renderSummaryStats();renderFollowupList();renderLeaderboard();renderSessionBreakdown();renderRecentSundays();renderConsistencyTable();populateConsistencyDeptFilter();populateReportSessionFilter();renderAbsenceTiers();renderTopAttendees();renderMemberOfMonth();renderDeptHealth();
 }
 
 function populateReportSessionFilter(){
@@ -4206,15 +4499,18 @@ function populateReportSessionFilter(){
 }
 
 function computeMemberStats(sessionFilter){
+  // Exclude Special Program sessions from absence calculations
+  const specialSessions=new Set(meetingTypes.filter(m=>m.category==='Special').map(m=>m.name));
+  const regAttn=specialSessions.size?allAttendance.filter(r=>!specialSessions.has(r.session)):allAttendance;
   memberStats=allMembers.filter(m=>m.is_active).map(m=>{
-    const myRows=allAttendance.filter(r=>r.member_id===m.id);
-    const possible=new Set(allAttendance.map(r=>r.date+'|'+r.session));
+    const myRows=regAttn.filter(r=>r.member_id===m.id);
+    const possible=new Set(regAttn.map(r=>r.date+'|'+r.session));
     const mine=new Set(myRows.map(r=>r.date+'|'+r.session));
     const total=possible.size,pct=total>0?Math.round((mine.size/total)*100):0;
-    const lastRow=myRows.sort((a,b)=>b.date.localeCompare(a.date))[0];
+    const lastRow=myRows.slice().sort((a,b)=>b.date.localeCompare(a.date))[0];
     const sorted=reportSundays.slice().sort((a,b)=>b.localeCompare(a));
-    let streak=0;for(const d of sorted){const has=allAttendance.filter(r=>r.date===d).length>0;if(!has)continue;if(!myRows.some(r=>r.date===d))streak++;else break;}
-    const last6=reportSundays.slice(-6).map(d=>{const has=allAttendance.filter(r=>r.date===d).length>0;if(!has)return 'none';return myRows.some(r=>r.date===d)?'present':'absent';});
+    let streak=0;for(const d of sorted){const has=regAttn.some(r=>r.date===d);if(!has)continue;if(!myRows.some(r=>r.date===d))streak++;else break;}
+    const last6=reportSundays.slice(-6).map(d=>{const has=regAttn.some(r=>r.date===d);if(!has)return 'none';return myRows.some(r=>r.date===d)?'present':'absent';});
     return{...m,attended:mine.size,total,pct,lastSeen:lastRow?.date||null,streak,last6};
   });
   memberStats.sort((a,b)=>b.pct-a.pct||a.full_name.localeCompare(b.full_name));
@@ -4273,7 +4569,7 @@ function populateConsistencyDeptFilter(){const sel=document.getElementById('cons
 
 function renderConsistencyTable(){
   const q=(document.getElementById('consistencySearch')?.value||'').toLowerCase(),dept=document.getElementById('consistencyDept')?.value||'';
-  const filtered=memberStats.filter(m=>(!q||m.full_name.toLowerCase().includes(q))&&(!dept||m.department===dept));
+  const filtered=memberStats.filter(m=>(!q||m.full_name.toLowerCase().includes(q))&&(!dept||(m.department||'').split(',').map(d=>d.trim()).includes(dept)));
   const tbody=document.getElementById('consistencyTbody');if(!tbody)return;
   if(!filtered.length){tbody.innerHTML='<tr><td colspan="8"><div class="rc-empty">No members match.</div></td></tr>';return;}
   tbody.innerHTML=filtered.map((m,i)=>{const initials=m.full_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);const photo=m.photo_url?`<img class="member-photo" src="${m.photo_url}" style="width:28px;height:28px">`:`<div class="member-initials" style="width:28px;height:28px;font-size:0.65rem">${initials}</div>`;const bc=m.pct>=75?'high':m.pct>=40?'mid':'low';const ls=m.lastSeen?new Date(m.lastSeen+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';const dots=m.last6.map(s=>`<div class="h-dot ${s}"></div>`).join('');return`<tr><td style="color:var(--warm-gray);font-size:0.8rem">${i+1}</td><td><div class="member-cell">${photo}<div><div class="member-name-cell">${m.full_name}</div></div></div></td><td>${m.department?`<span class="dept-badge">${m.department}</span>`:'—'}</td><td style="font-weight:600">${m.attended}</td><td style="color:var(--warm-gray)">${m.total}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="cr-bar-wrap" style="width:60px"><div class="cr-bar ${bc}" style="width:${m.pct}%"></div></div><span class="cr-pct ${bc}" style="font-size:0.82rem">${m.pct}%</span></div></td><td><div class="history-dots">${dots}</div></td><td style="font-size:0.78rem;color:var(--warm-gray)">${ls}</td></tr>`;}).join('');
@@ -4398,7 +4694,7 @@ function renderBrowseDate(dateStr){
 // ══════════════════════════════════════════
 // DEPARTMENTS
 // ══════════════════════════════════════════
-const DEPT_ICONS={'Choir':'🎵','Ushers':'🤝','Media & Tech':'🎥',"Children's Church":'👶','Youth':'⚡',"Women's Fellowship":'💐',"Men's Fellowship":'🦁','Protocol':'🎖','Prayer Team':'🙏','Workers':'⚙️','General Member':'👤'};
+const DEPT_ICONS={'Choir':'🎵','Ushers':'🤝','Media & Tech':'🎥',"Children's Church":'👶','Youth':'⚡',"Women's Fellowship":'💐',"Men's Fellowship":'🦁','Protocol':'🎖','Prayer Team':'🙏','General Member':'👤'};
 let departments=JSON.parse(localStorage.getItem('tph_departments')||'[]');
 let editingDeptName=null;
 function saveDepts(){localStorage.setItem('tph_departments',JSON.stringify(departments));}
@@ -4552,12 +4848,12 @@ function deleteMeetingType(i){if(!confirm(`Delete "${meetingTypes[i].name}"?`))r
 // PHASE 5 — BIRTHDAYS & SELF-REGISTRATION
 // ══════════════════════════════════════════
 function initBirthdays(){renderBirthdayDeptFilter();renderBirthdays();}
-function renderBirthdayDeptFilter(){const sel=document.getElementById('bdayDept');if(!sel)return;const depts=[...new Set(allMembers.map(m=>m.department).filter(Boolean))].sort();sel.innerHTML='<option value="">All Departments</option>'+depts.map(d=>`<option value="${d}">${d}</option>`).join('');}
+function renderBirthdayDeptFilter(){const sel=document.getElementById('bdayDept');if(!sel)return;const depts=[...new Set(allMembers.flatMap(m=>m.department?m.department.split(',').map(d=>d.trim()):[]).filter(Boolean))].sort();sel.innerHTML='<option value="">All Departments</option>'+depts.map(d=>`<option value="${d}">${d}</option>`).join('');}
 
 function renderBirthdays(){
   const rangeDays=parseInt(document.getElementById('bdayRange')?.value||'30'),deptFilter=document.getElementById('bdayDept')?.value||'';
   const today=new Date();today.setHours(0,0,0,0);
-  const withDob=allMembers.filter(m=>m.is_active&&m.date_of_birth&&(!deptFilter||m.department===deptFilter));
+  const withDob=allMembers.filter(m=>m.is_active&&m.date_of_birth&&(!deptFilter||(m.department||'').split(',').map(d=>d.trim()).includes(deptFilter)));
   const noDob=allMembers.filter(m=>m.is_active&&!m.date_of_birth).length;
   const enriched=withDob.map(m=>{const dob=new Date(m.date_of_birth+'T12:00:00');const thisYear=new Date(today.getFullYear(),dob.getMonth(),dob.getDate());const next=thisYear>=today?thisYear:new Date(today.getFullYear()+1,dob.getMonth(),dob.getDate());const daysUntil=Math.round((next-today)/(1000*60*60*24));const age=today.getFullYear()-dob.getFullYear()-(thisYear>=today?0:-1);return{...m,daysUntil,age,dobFormatted:dob.toLocaleDateString('en-GB',{day:'numeric',month:'long'})};}).filter(m=>m.daysUntil<=rangeDays).sort((a,b)=>a.daysUntil-b.daysUntil);
   const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
@@ -4592,9 +4888,16 @@ function initComms(){
   loadBulkDeptFilter();
   loadFollowupTemplate();
   loadFollowupAbsentList();
+  loadFirstTimerFollowup();
   renderSendLog();
   populateReportSessionInComms();
   generateMondayReport();
+  // Ensure messages tab is active on first open
+  const msgTab = document.getElementById('comms-messages');
+  if (msgTab) msgTab.style.display = 'block';
+  ['comms-groups','comms-report-log','comms-log'].forEach(id => {
+    const e = document.getElementById(id); if (e) e.style.display = 'none';
+  });
 }
 function populateReportSessionInComms(){
   const sel=document.getElementById('mondayReportSession');if(!sel)return;
@@ -4602,18 +4905,18 @@ function populateReportSessionInComms(){
   const sessions=[...new Set(meetingTypes.filter(m=>m.active).map(m=>m.name))].sort();
   sel.innerHTML='<option value="">All Sessions</option>'+sessions.map(s=>`<option value="${s}">${s}</option>`).join('');
 }
-function loadBulkDeptFilter(){const sel=document.getElementById('bulkDept');if(!sel)return;const depts=[...new Set(allMembers.map(m=>m.department).filter(Boolean))].sort();sel.innerHTML='<option value="">Choose department...</option>'+depts.map(d=>`<option value="${d}">${d}</option>`).join('');}
+function loadBulkDeptFilter(){const sel=document.getElementById('bulkDept');if(!sel)return;const depts=[...new Set(allMembers.flatMap(m=>m.department?m.department.split(',').map(d=>d.trim()):[]).filter(Boolean))].sort();sel.innerHTML='<option value="">Choose department...</option>'+depts.map(d=>`<option value="${d}">${d}</option>`).join('');}
 function loadBulkRecipients(){
   const dept=document.getElementById('bulkDept').value,el=document.getElementById('bulkRecipientList');if(!el)return;bulkSelectedMembers=new Set();
   if(!dept){el.innerHTML='<div style="color:var(--warm-gray);font-size:0.82rem;text-align:center;padding:20px">Select a department above</div>';updateBulkCount();return;}
-  const members=allMembers.filter(m=>m.is_active&&m.department===dept);
+  const members=allMembers.filter(m=>m.is_active&&(!dept||(m.department||'').split(',').map(d=>d.trim()).includes(dept)));
   if(!members.length){el.innerHTML='<div style="color:var(--warm-gray);font-size:0.82rem;text-align:center;padding:16px">No active members</div>';updateBulkCount();return;}
   members.forEach(m=>{if(m.phone)bulkSelectedMembers.add(m.id);});
   el.innerHTML=members.map(m=>{const checked=bulkSelectedMembers.has(m.id);return`<div class="recipient-row"><div class="recipient-check ${checked?'checked':''}" onclick="${m.phone?`toggleBulkMember('${m.id}',this)`:''}" style="${!m.phone?'opacity:0.35;cursor:not-allowed':''}">${checked?'✓':''}</div><div class="recipient-name">${m.full_name}</div><div class="recipient-phone">${m.phone||'⚠ No phone'}</div></div>`;}).join('');
   updateBulkCount();
 }
 function toggleBulkMember(id,el){if(bulkSelectedMembers.has(id)){bulkSelectedMembers.delete(id);el.classList.remove('checked');el.textContent='';}else{bulkSelectedMembers.add(id);el.classList.add('checked');el.textContent='✓';}updateBulkCount();}
-function selectAllBulk(){const dept=document.getElementById('bulkDept').value;if(!dept)return;allMembers.filter(m=>m.is_active&&m.department===dept&&m.phone).forEach(m=>bulkSelectedMembers.add(m.id));loadBulkRecipients();}
+function selectAllBulk(){const dept=document.getElementById('bulkDept').value;if(!dept)return;allMembers.filter(m=>m.is_active&&(m.department||'').split(',').map(d=>d.trim()).includes(dept)&&m.phone).forEach(m=>bulkSelectedMembers.add(m.id));loadBulkRecipients();}
 function updateBulkCount(){const el=document.getElementById('bulkSelectedCount');if(el)el.textContent=`${bulkSelectedMembers.size} recipient${bulkSelectedMembers.size!==1?'s':''} selected`;}
 function insertVar(target,varName){const id=target==='bulk'?'bulkMessage':'followupMessage';const el=document.getElementById(id);if(!el)return;const s=el.selectionStart,e=el.selectionEnd;el.value=el.value.substring(0,s)+varName+el.value.substring(e);el.focus();el.setSelectionRange(s+varName.length,s+varName.length);}
 function sendBulkWhatsApp(){
@@ -4980,6 +5283,7 @@ let supabaseOK = false;
 function isChildMember(m) {
   if (!m) return false;
   if (m.member_category === 'Child') return true;
+  if (m.assisted_checkin === true) return true;
   const dept = (m.department || '').toLowerCase();
   return dept.includes('child') || dept.includes('junior') || dept.includes('kids');
 }
@@ -5005,10 +5309,13 @@ async function submitSelfReg() {
 
   if (!name) { showToast('Full name is required', 'error'); return; }
   if (!phone) { showToast('Phone number is required', 'error'); return; }
-  if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-    showToast('Please set a 4-digit check-in PIN', 'error'); return;
+  const regCat = document.getElementById('sr_category')?.value || 'Adult';
+  if (regCat !== 'Child') {
+    if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+      showToast('Please set a 4-digit check-in PIN', 'error'); return;
+    }
+    if (pin !== pinConfirm) { showToast('PINs do not match', 'error'); return; }
   }
-  if (pin !== pinConfirm) { showToast('PINs do not match', 'error'); return; }
 
   const btn = document.querySelector('.self-reg-submit');
   if (btn) { btn.textContent = 'Submitting...'; btn.disabled = true; }
@@ -5203,6 +5510,1083 @@ async function approveAllPending() {
   showToast(`All ${pending.length} registrations approved`, 'success');
 }
 
+
+// ══════════════════════════════════════════
+// SELF-REG PIN VISIBILITY (CHILDREN)
+// ══════════════════════════════════════════
+
+function srAutoCategory() {
+  const dob = document.getElementById('sr_dob')?.value;
+  if (!dob) return;
+  const age = Math.floor((Date.now() - new Date(dob + 'T12:00:00')) / (365.25*24*3600*1000));
+  const sel = document.getElementById('sr_category');
+  if (!sel) return;
+  if (age < 13) sel.value = 'Child';
+  else if (age <= 25) sel.value = 'Youth';
+  else sel.value = 'Adult';
+  toggleSrPin();
+}
+
+function toggleSrPin() {
+  const cat = document.getElementById('sr_category')?.value;
+  const card = document.getElementById('srPinCard');
+  if (!card) return;
+  const isChild = (cat === 'Child');
+  card.style.display = isChild ? 'none' : 'block';
+  if (isChild) {
+    const p = document.getElementById('sr_pin');
+    const pc = document.getElementById('sr_pin_confirm');
+    if (p) p.removeAttribute('required');
+    if (pc) pc.removeAttribute('required');
+  } else {
+    const p = document.getElementById('sr_pin');
+    const pc = document.getElementById('sr_pin_confirm');
+    if (p) p.setAttribute('required','');
+    if (pc) pc.setAttribute('required','');
+  }
+}
+
+function toggleMemberPinField() {
+  const cat = document.getElementById('f_category')?.value;
+  const row = document.getElementById('memberPinRow');
+  if (row) row.style.display = (cat === 'Child') ? 'none' : '';
+}
+
+
+// ══════════════════════════════════════════
+// AUTOMATIONS
+// ══════════════════════════════════════════
+
+// ── Birthday alert on login ──
+function checkBirthdaysOnLogin() {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const todayMD = `${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
+  const tomorrowMD = `${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`;
+
+  const celebrants = allMembers.filter(m => {
+    if (!m.is_active || !m.date_of_birth) return false;
+    const dobMD = m.date_of_birth.slice(5); // MM-DD
+    return dobMD === todayMD;
+  });
+  const tomorrow_bdays = allMembers.filter(m => {
+    if (!m.is_active || !m.date_of_birth) return false;
+    return m.date_of_birth.slice(5) === tomorrowMD;
+  });
+
+  if (celebrants.length) {
+    const names = celebrants.map(m => m.full_name.split(' ')[0]).join(', ');
+    setTimeout(() => showToast(`🎂 Birthday today: ${names}! Don't forget to send a message.`, 'success'), 1500);
+  }
+  if (tomorrow_bdays.length) {
+    const names = tomorrow_bdays.map(m => m.full_name.split(' ')[0]).join(', ');
+    setTimeout(() => showToast(`🎁 Birthday tomorrow: ${names}`, 'info'), 3000);
+  }
+}
+
+// ── Streak alert when attendance is saved ──
+async function checkStreakAlerts(memberId) {
+  const m = allMembers.find(x => x.id === memberId);
+  if (!m) return;
+  try {
+    // Check if this is a return after absence
+    const since = new Date(); since.setDate(since.getDate() - 56); // 8 weeks
+    const { data } = await db.from('attendance')
+      .select('date')
+      .eq('member_id', memberId)
+      .gte('date', since.toISOString().split('T')[0])
+      .order('date', { ascending: false })
+      .limit(10);
+    if (!data) return;
+
+    if (data.length === 1) {
+      // This is their first attendance in 8 weeks
+      showToast(`🙌 Welcome back, ${m.full_name.split(' ')[0]}! First attendance in a while.`, 'info');
+    }
+  } catch(e) {}
+}
+
+// ── Check absence streaks after marking attendance ──
+async function checkAbsenceStreaks() {
+  if (!currentSession || !allMembers.length) return;
+  const specialSessions = new Set(meetingTypes.filter(m=>m.category==='Special').map(m=>m.name));
+  if (specialSessions.has(currentSession)) return;
+  const since = new Date(); since.setDate(since.getDate() - 49); // 7 weeks
+  try {
+    const { data } = await db.from('attendance')
+      .select('member_id, date')
+      .gte('date', since.toISOString().split('T')[0]);
+    if (!data) return;
+
+    const active = allMembers.filter(m => m.is_active);
+    const attendedRecently = new Set(data.map(r => r.member_id));
+
+    // Get unique dates to compute streaks properly
+    const dates = [...new Set(data.map(r => r.date))].sort((a,b)=>b.localeCompare(a));
+    if (dates.length < 3) return;
+
+    active.forEach(m => {
+      if (presentSet.has(m.id)) return; // just checked in, not absent
+      const myDates = new Set(data.filter(r=>r.member_id===m.id).map(r=>r.date));
+      let streak = 0;
+      for (const d of dates) {
+        if (!myDates.has(d)) streak++;
+        else break;
+      }
+      if (streak === 3) {
+        showToast(`⚠ ${m.full_name} has missed ${streak} consecutive meetings`, 'info');
+      }
+    });
+  } catch(e) {}
+}
+
+// ── First-timer welcome prompt on first ever check-in ──
+async function checkFirstTimerWelcome(memberId) {
+  const m = allMembers.find(x => x.id === memberId);
+  if (!m || m.member_category !== 'First Timer') return;
+  try {
+    const { data } = await db.from('attendance').select('id').eq('member_id', memberId).limit(2);
+    if (!data || data.length !== 1) return; // only fire on the very first record
+    const church = appSettings.churchName || 'The Precious House';
+    const firstName = (m.full_name || '').split(' ')[0];
+    const msg = `Hi ${firstName}! 🎉 Welcome to ${church}! We're so glad you joined us today. We'd love to stay in touch — feel free to reach out anytime. God bless you! 🙏`;
+    if (m.phone) {
+      const phone = m.phone.replace(/\D/g,'').replace(/^0/,'234');
+      if (confirm(`${m.full_name} just checked in for the first time! Send a welcome message via WhatsApp?`)) {
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+      }
+    } else {
+      showToast(`🎉 First-ever check-in for ${m.full_name}! (No phone on record)`, 'info');
+    }
+  } catch(e) {}
+}
+
+// ── First Timer follow-up list (3+ weeks, no return) ──
+async function loadFirstTimerFollowup() {
+  const el = document.getElementById('firstTimerFollowupList');
+  if (!el) return;
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 21);
+  const cutoffStr = cutoff.toISOString().split('T')[0];
+  const firstTimers = allMembers.filter(m => m.is_active && m.member_category === 'First Timer' &&
+    m.date_joined && m.date_joined <= cutoffStr);
+  if (!firstTimers.length) { el.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:16px">No first timers needing follow-up</div>'; return; }
+  try {
+    const ids = firstTimers.map(m => m.id);
+    const { data } = await db.from('attendance').select('member_id').in('member_id', ids).gte('date', cutoffStr);
+    const returnedIds = new Set((data || []).map(r => r.member_id));
+    const needsFollowup = firstTimers.filter(m => !returnedIds.has(m.id));
+    if (!needsFollowup.length) { el.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:16px">All first timers have returned recently ✓</div>'; return; }
+    const church = appSettings.churchName || 'The Precious House';
+    el.innerHTML = needsFollowup.map(m => {
+      const firstName = (m.full_name || '').split(' ')[0];
+      const msg = `Hi ${firstName}! 👋 We missed you at ${church}. We'd love to see you again this Sunday — you're always welcome! 🙏`;
+      const phone = (m.phone || '').replace(/\D/g,'').replace(/^0/,'234');
+      const waLink = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : '';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--border);gap:8px">
+        <div><div style="font-weight:600;font-size:0.88rem">${m.full_name}</div><div style="font-size:0.78rem;color:var(--muted)">Joined ${m.date_joined || '—'} · ${m.phone || 'No phone'}</div></div>
+        ${waLink ? `<a href="${waLink}" target="_blank" style="background:var(--green);color:#fff;padding:5px 10px;border-radius:6px;font-size:0.78rem;white-space:nowrap;text-decoration:none">WhatsApp</a>` : '<span style="font-size:0.75rem;color:var(--muted)">No phone</span>'}
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:16px">Could not load</div>'; }
+}
+
+// ── Auto age-based category suggestion ──
+function suggestMemberCategory() {
+  const dob = document.getElementById('f_dob')?.value;
+  const catEl = document.getElementById('f_category');
+  if (!dob || !catEl) return;
+  const age = Math.floor((Date.now() - new Date(dob+'T12:00:00')) / (365.25*24*3600*1000));
+  const suggested = age < 13 ? 'Child' : age <= 25 ? 'Youth' : 'Adult';
+  if (catEl.value !== suggested) {
+    catEl.value = suggested;
+    showToast(`Category set to ${suggested} based on age (${age})`, 'info');
+    toggleMemberPinField();
+  }
+}
+
+// ── First-timer auto-flag ──
+function checkFirstTimerFlag() {
+  const type = document.getElementById('f_type')?.value;
+  if (type === 'First Timer') {
+    showToast("First Timer — will appear in follow-up list after 3 weeks if they don't return", 'info');
+  }
+}
+
+
+// ══════════════════════════════════════════
+// ABSENCE TIERS + TOP ATTENDEES
+// ══════════════════════════════════════════
+
+function renderAbsenceTiers() {
+  const el = document.getElementById('absenceTiersList');
+  if (!el || !memberStats.length) return;
+
+  const tiers = [
+    { label: '⚫ At Risk',    min: 7,  color: '#374151', bg: '#F9FAFB', desc: '7+ meetings missed' },
+    { label: '🔴 Follow Up',  min: 4,  color: '#BE1E2D', bg: '#FDEAEA', desc: '4–6 meetings missed' },
+    { label: '🟡 Watch',      min: 2,  color: '#D97706', bg: '#FFFBEB', desc: '2–3 meetings missed' },
+  ];
+
+  const qualified = memberStats.filter(m => m.total > 0);
+  let html = '';
+
+  // ── Lapsed tier: attended before 90 days ago, nothing since ──
+  const lapsedMembers = allMembers.filter(m =>
+    m.is_active &&
+    !recentlyActiveIds.has(m.id) &&
+    everAttendedBeforeIds.has(m.id)
+  ).sort((a,b) => (a.full_name||'').localeCompare(b.full_name||''));
+  if (lapsedMembers.length) {
+    html += `<div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-weight:700;font-size:0.84rem;color:#6B7280">⚪ Lapsed</span>
+        <span style="font-size:0.72rem;color:var(--muted)">90+ days absent</span>
+        <span style="background:#F3F4F6;color:#6B7280;border-radius:12px;padding:1px 8px;font-size:0.72rem;font-weight:700;margin-left:auto">${lapsedMembers.length}</span>
+      </div>
+      <div style="background:#F9FAFB;border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:8px;font-size:0.78rem;color:var(--muted);line-height:1.5">
+        💡 These members have been away 3+ months. Consider a <strong>pastoral visit</strong> rather than just a message.
+      </div>
+      ${lapsedMembers.map(m => `
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:0.84rem;font-weight:500">${m.full_name}</div>
+            <div style="font-size:0.72rem;color:var(--muted)">${m.department||'No dept'} · ${m.phone||'No phone'}</div>
+          </div>
+          <span style="font-size:0.75rem;font-weight:600;color:#9CA3AF;white-space:nowrap">90+ days</span>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  tiers.forEach(tier => {
+    const max = tier.min === 7 ? 999 : tier.min === 4 ? 6 : 3;
+    const members = qualified.filter(m => m.streak >= tier.min && m.streak <= max)
+      .sort((a,b) => b.streak - a.streak);
+    if (!members.length) return;
+
+    html += `<div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-weight:700;font-size:0.84rem;color:${tier.color}">${tier.label}</span>
+        <span style="font-size:0.72rem;color:var(--muted)">${tier.desc}</span>
+        <span style="background:${tier.bg};color:${tier.color};border-radius:12px;padding:1px 8px;font-size:0.72rem;font-weight:700;margin-left:auto">${members.length}</span>
+      </div>
+      ${members.map(m => `
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:0.84rem;font-weight:500">${m.full_name}</div>
+            <div style="font-size:0.72rem;color:var(--muted)">${m.department||'No dept'} · ${m.phone||'No phone'}</div>
+          </div>
+          <span style="font-size:0.78rem;font-weight:700;color:${tier.color};white-space:nowrap">${m.streak} missed</span>
+        </div>`).join('')}
+    </div>`;
+  });
+
+  el.innerHTML = html || '<div class="rc-empty">🎉 No concerning absences right now!</div>';
+}
+
+function renderTopAttendees() {
+  const el = document.getElementById('topAttendeesList');
+  const label = document.getElementById('topAttendeesMonth');
+  if (!el || !memberStats.length) return;
+
+  const month = new Date().toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+  if (label) label.textContent = month;
+
+  const qualified = memberStats
+    .filter(m => m.total > 0 && m.pct >= 70)
+    .sort((a,b) => b.pct - a.pct || b.attended - a.attended)
+    .slice(0, 10);
+
+  if (!qualified.length) {
+    el.innerHTML = '<div class="rc-empty">Not enough data yet for this period.</div>';
+    return;
+  }
+
+  const medals = ['🥇','🥈','🥉'];
+  el.innerHTML = qualified.map((m, i) => {
+    const initials = m.full_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const photo = m.photo_url
+      ? `<img src="${m.photo_url}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0">`
+      : `<div style="width:32px;height:32px;border-radius:50%;background:rgba(26,31,94,0.1);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;color:var(--navy);flex-shrink:0">${initials}</div>`;
+    const bar = Math.round(m.pct);
+    const barColor = m.pct === 100 ? 'var(--green)' : m.pct >= 80 ? 'var(--navy)' : 'var(--muted)';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="width:22px;text-align:center;font-size:0.9rem;flex-shrink:0">${medals[i]||i+1}</div>
+      ${photo}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:0.84rem;font-weight:600">${m.full_name}</div>
+        <div style="font-size:0.7rem;color:var(--muted)">${m.attended}/${m.total} meetings</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <div style="width:48px;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+          <div style="width:${bar}%;height:100%;background:${barColor};border-radius:3px"></div>
+        </div>
+        <span style="font-size:0.8rem;font-weight:700;color:${barColor};width:36px;text-align:right">${bar}%</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
+
+let motmMember = null;
+
+function renderMemberOfMonth() {
+  const el = document.getElementById('motmContent');
+  const periodEl = document.getElementById('motmPeriod');
+  if (!el || !memberStats.length) return;
+
+  const month = new Date().toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+  if (periodEl) periodEl.textContent = month;
+
+  const winner = memberStats
+    .filter(m => m.attended >= 3 && m.total > 0)
+    .sort((a,b) => b.pct - a.pct || b.attended - a.attended)[0];
+
+  if (!winner) { el.innerHTML = '<div class="rc-empty">Not enough data yet.</div>'; return; }
+  motmMember = winner;
+
+  const initials = winner.full_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const photo = winner.photo_url
+    ? `<img src="${winner.photo_url}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid var(--green)">`
+    : `<div style="width:64px;height:64px;border-radius:50%;background:rgba(13,92,53,0.12);border:3px solid var(--green);display:flex;align-items:center;justify-content:center;font-family:'Lexend',sans-serif;font-size:1.3rem;font-weight:700;color:var(--green)">${initials}</div>`;
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;padding:8px 0">
+      ${photo}
+      <div style="flex:1">
+        <div style="font-family:'Lexend',sans-serif;font-size:1rem;font-weight:700;color:var(--navy)">${winner.full_name}</div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">${winner.department||'No dept'} · ${winner.attended}/${winner.total} meetings</div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+            <div style="width:${winner.pct}%;height:100%;background:var(--green);border-radius:4px"></div>
+          </div>
+          <span style="font-weight:700;color:var(--green);font-size:0.88rem">${winner.pct}%</span>
+        </div>
+      </div>
+      <div style="font-size:2.5rem">⭐</div>
+    </div>
+    <div style="margin-top:10px;padding:10px 12px;background:var(--green-faint);border-radius:8px;font-size:0.8rem;color:var(--green)">
+      🎉 Congratulations ${winner.full_name.split(' ')[0]}! Outstanding faithfulness this period.
+    </div>`;
+}
+
+function shareMOTM() {
+  if (!motmMember) { showToast('Load reports first', 'info'); return; }
+  const church = appSettings.churchName || 'The Precious House';
+  const month = new Date().toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+  const msg = `🌟 *${church} — Member of the Month*\n\n` +
+    `Congratulations to *${motmMember.full_name}* 🎉\n\n` +
+    `📊 Attendance: ${motmMember.pct}% (${motmMember.attended}/${motmMember.total} meetings)\n` +
+    `🏛 Department: ${motmMember.department||'—'}\n\n` +
+    `Thank you for your faithfulness! 🙏\n— ${church} Family`;
+  const m = allMembers.find(x => x.id === motmMember.id);
+  if (m?.phone) {
+    const phone = m.phone.replace(/\D/g,'').replace(/^0/,'234');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  }
+  navigator.clipboard.writeText(msg).then(() => showToast('Message copied to clipboard', 'info'));
+}
+
+function renderDeptHealth() {
+  const el = document.getElementById('deptHealthList');
+  if (!el || !memberStats.length) return;
+
+  const deptMap = {};
+  memberStats.forEach(m => {
+    const depts = (m.department||'General Member').split(',').map(d=>d.trim());
+    depts.forEach(dept => {
+      if (!deptMap[dept]) deptMap[dept] = [];
+      deptMap[dept].push(m);
+    });
+  });
+
+  const scores = Object.entries(deptMap).map(([dept, members]) => ({
+    dept,
+    count: members.length,
+    avgPct: Math.round(members.reduce((s,m)=>s+m.pct,0)/members.length),
+    atRisk: members.filter(m=>m.pct<40).length
+  })).sort((a,b) => b.avgPct - a.avgPct);
+
+  if (!scores.length) { el.innerHTML = '<div class="rc-empty">No department data.</div>'; return; }
+
+  el.innerHTML = scores.map(d => {
+    const color = d.avgPct >= 70 ? 'var(--green)' : d.avgPct >= 40 ? 'var(--navy)' : 'var(--red)';
+    const flag = d.avgPct < 40 ? ' 🚨' : d.avgPct < 60 ? ' ⚠️' : '';
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:0.86rem;font-weight:600">${d.dept}${flag} <span style="font-weight:400;color:var(--muted);font-size:0.72rem">${d.count} members</span></span>
+        <span style="font-weight:700;font-size:0.86rem;color:${color}">${d.avgPct}%</span>
+      </div>
+      <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+        <div style="width:${d.avgPct}%;height:100%;background:${color};border-radius:4px"></div>
+      </div>
+      ${d.atRisk ? `<div style="font-size:0.7rem;color:var(--red);margin-top:3px">${d.atRisk} member${d.atRisk!==1?'s':''} need follow-up</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// PHASE 8 — VISITORS & GUESTS
+// ══════════════════════════════════════════
+
+function switchCheckinTab(tab, btn) {
+  ['ci-members','ci-visitors','ci-guests'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id === 'ci-'+tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('#page-checkin .settings-nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (tab === 'visitors') loadVisitors();
+  if (tab === 'guests') loadGuestCounts();
+}
+
+let currentVisitors = [];
+let editingVisitorId = null;
+
+function openAddVisitorModal() {
+  editingVisitorId = null;
+  ['vis_name','vis_phone','vis_address','vis_referrer','vis_notes'].forEach(id => {
+    const e = document.getElementById(id); if (e) e.value = '';
+  });
+  ['vis_gender','vis_source'].forEach(id => {
+    const e = document.getElementById(id); if (e) e.value = '';
+  });
+  openModal('addVisitorModal');
+}
+
+async function saveVisitor() {
+  const name = document.getElementById('vis_name').value.trim();
+  if (!name) { showToast('Name required', 'error'); return; }
+  const payload = {
+    full_name: name,
+    phone: document.getElementById('vis_phone').value.trim() || null,
+    gender: document.getElementById('vis_gender').value || null,
+    address: document.getElementById('vis_address').value.trim() || null,
+    referrer_name: document.getElementById('vis_referrer').value.trim() || null,
+    how_heard: document.getElementById('vis_source').value || null,
+    notes: document.getElementById('vis_notes').value.trim() || null,
+    first_visit: checkinDate,
+    last_session: currentSession || null,
+    visit_count: 1,
+    converted_to_member: false
+  };
+  try {
+    if (editingVisitorId) {
+      const { data: existing } = await db.from('visitors').select('visit_count').eq('id', editingVisitorId).single();
+      await db.from('visitors').update({
+        ...payload,
+        visit_count: (existing?.visit_count || 1) + 1,
+        last_session: currentSession || null
+      }).eq('id', editingVisitorId);
+      showToast('Visitor updated', 'success');
+    } else {
+      // Check if visitor already exists by phone
+      if (payload.phone) {
+        const { data: existing } = await db.from('visitors').select('*').eq('phone', payload.phone).single();
+        if (existing) {
+          await db.from('visitors').update({
+            visit_count: (existing.visit_count || 1) + 1,
+            last_session: currentSession || null
+          }).eq('id', existing.id);
+          showToast(`${name} — visit #${(existing.visit_count || 1) + 1} recorded`, 'success');
+          if ((existing.visit_count || 1) + 1 >= 3) {
+            setTimeout(() => showToast(`🌟 ${name} has visited ${(existing.visit_count||1)+1} times — consider inviting them to register!`, 'info'), 1000);
+          }
+          closeModal('addVisitorModal');
+          loadVisitors();
+          return;
+        }
+      }
+      await db.from('visitors').insert([payload]);
+      showToast(`${name} logged as visitor`, 'success');
+      logActivity(`Visitor logged: ${name}`, 'info');
+    }
+    closeModal('addVisitorModal');
+    loadVisitors();
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function loadVisitors() {
+  const el = document.getElementById('visitorsList');
+  if (!el) return;
+  el.innerHTML = '<div class="rc-empty"><div class="spinner" style="margin:0 auto 8px"></div>Loading...</div>';
+  try {
+    const { data } = await db.from('visitors')
+      .select('*').eq('converted_to_member', false)
+      .order('created_at', { ascending: false }).limit(50);
+    currentVisitors = data || [];
+    renderVisitorsList();
+  } catch(e) {
+    el.innerHTML = '<div class="rc-empty">Could not load visitors.</div>';
+  }
+}
+
+function renderVisitorsList() {
+  const el = document.getElementById('visitorsList');
+  if (!el) return;
+  if (!currentVisitors.length) {
+    el.innerHTML = '<div class="rc-empty">No visitors logged yet. Click <strong>+ Log Visitor</strong> to record one.</div>';
+    return;
+  }
+  el.innerHTML = currentVisitors.map(v => {
+    const visits = v.visit_count || 1;
+    const badge = visits >= 3
+      ? `<span style="background:var(--green);color:white;border-radius:12px;padding:2px 8px;font-size:0.7rem;font-weight:700">⭐ ${visits} visits — invite!</span>`
+      : `<span style="background:rgba(26,31,94,0.08);color:var(--navy);border-radius:12px;padding:2px 8px;font-size:0.7rem">${visits} visit${visits!==1?'s':''}</span>`;
+    const initials = (v.full_name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="viewVisitorProfile('${v.id}')">
+      <div style="width:38px;height:38px;border-radius:50%;background:rgba(26,31,94,0.1);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.78rem;color:var(--navy);flex-shrink:0">${initials}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:0.88rem">${v.full_name}</div>
+        <div style="font-size:0.72rem;color:var(--muted)">${v.phone||'No phone'}${v.referrer_name?' · Ref: '+v.referrer_name:''}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+        ${badge}
+        ${v.is_prospect ? `<span style="background:rgba(13,92,53,0.1);color:var(--green);border-radius:12px;padding:2px 7px;font-size:0.68rem;font-weight:600">🌿 Prospect</span>` : ''}
+        <span style="font-size:0.68rem;color:var(--muted)">${v.first_visit||''}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function viewVisitorProfile(id) {
+  const v = currentVisitors.find(x => x.id === id);
+  if (!v) return;
+  const visits = v.visit_count || 1;
+  document.getElementById('groupDetailName') && null; // not using this modal
+  document.getElementById('visitorProfileContent').innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="font-family:'Lexend',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy)">${v.full_name}</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-top:4px">${v.gender||''} ${v.phone?'· '+v.phone:''}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div class="stat-card"><div class="stat-label">Total Visits</div><div class="stat-num" style="color:var(--navy)">${visits}</div></div>
+      <div class="stat-card"><div class="stat-label">Last Session</div><div class="stat-num" style="font-size:0.9rem;color:var(--muted)">${v.last_session||'—'}</div></div>
+    </div>
+    ${v.address?`<div style="margin-bottom:8px"><span style="font-size:0.72rem;color:var(--muted);font-weight:600">ADDRESS</span><div style="font-size:0.84rem">${v.address}</div></div>`:''}
+    ${v.referrer_name?`<div style="margin-bottom:8px"><span style="font-size:0.72rem;color:var(--muted);font-weight:600">REFERRED BY</span><div style="font-size:0.84rem">${v.referrer_name}</div></div>`:''}
+    ${v.notes?`<div style="margin-bottom:8px"><span style="font-size:0.72rem;color:var(--muted);font-weight:600">NOTES</span><div style="font-size:0.84rem">${v.notes}</div></div>`:''}
+    ${visits >= 3 ? `<div style="background:var(--green-faint);border:1.5px solid rgba(13,92,53,0.2);border-radius:10px;padding:12px;margin-top:12px;font-size:0.84rem;color:var(--green)">⭐ <strong>This visitor has attended ${visits} times.</strong> They may be ready to become a member!</div>` : ''}
+    ${v.is_prospect ? `<div style="background:rgba(13,92,53,0.06);border:1.5px solid rgba(13,92,53,0.25);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:0.83rem;color:var(--green)">🌿 <strong>Marked as Prospect</strong>${v.prospect_notes ? ' — ' + v.prospect_notes : ''}</div>` : ''}
+  `;
+  const prospectBtn = document.getElementById('visitorProspectBtn');
+  if (prospectBtn) {
+    if (v.is_prospect) {
+      prospectBtn.textContent = '✓ Prospect';
+      prospectBtn.disabled = true;
+      prospectBtn.style.opacity = '0.5';
+    } else {
+      prospectBtn.textContent = 'Mark as Prospect';
+      prospectBtn.disabled = false;
+      prospectBtn.style.opacity = '1';
+      prospectBtn.onclick = () => markProspect(id);
+    }
+  }
+  document.getElementById('visitorConvertBtn').onclick = () => convertVisitorToMember(id);
+  openModal('visitorProfileModal');
+}
+
+async function convertVisitorToMember(id) {
+  const v = currentVisitors.find(x => x.id === id);
+  if (!v) return;
+  closeModal('visitorProfileModal');
+  // Pre-fill the self-reg form with visitor data
+  openSelfRegForm();
+  setTimeout(() => {
+    const set = (eid, val) => { const e = document.getElementById(eid); if (e && val) e.value = val; };
+    set('sr_name', v.full_name);
+    set('sr_phone', v.phone);
+    set('sr_address', v.address);
+    set('sr_gender', v.gender);
+    showToast('Visitor details pre-filled. Ask them to complete the form.', 'info');
+  }, 300);
+}
+
+async function markProspect(id) {
+  const notes = prompt('Optional note for this prospect (e.g. "Pastor spoke with them"):') ?? '';
+  try {
+    await db.from('visitors').update({ is_prospect: true, prospect_notes: notes || null }).eq('id', id);
+    const v = currentVisitors.find(x => x.id === id);
+    if (v) { v.is_prospect = true; v.prospect_notes = notes || null; }
+    closeModal('visitorProfileModal');
+    renderVisitorsList();
+    showToast('Visitor marked as prospect', 'success');
+  } catch(e) {
+    showToast('Could not update visitor: ' + e.message, 'error');
+  }
+}
+
+// ── Guest Headcount ──
+let guestAdults = 0, guestChildren = 0;
+
+function adjustGuest(type, delta) {
+  if (type === 'adults') {
+    guestAdults = Math.max(0, guestAdults + delta);
+    document.getElementById('guestAdults').textContent = guestAdults;
+  } else {
+    guestChildren = Math.max(0, guestChildren + delta);
+    document.getElementById('guestChildren').textContent = guestChildren;
+  }
+  const sub = document.getElementById('guestCountSession');
+  if (sub) sub.textContent = currentSession ? `Session: ${currentSession} · ${checkinDate}` : 'Select a session above first';
+}
+
+async function saveGuestCount() {
+  if (!currentSession) { showToast('Select a session first', 'error'); return; }
+  if (guestAdults === 0 && guestChildren === 0) { showToast('Enter at least one guest', 'error'); return; }
+  try {
+    await db.from('guest_counts').upsert({
+      date: checkinDate, session: currentSession,
+      adults: guestAdults, children: guestChildren
+    }, { onConflict: 'date,session' });
+    showToast(`Guest count saved: ${guestAdults} adults, ${guestChildren} children`, 'success');
+    loadGuestCounts();
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function loadGuestCounts() {
+  const el = document.getElementById('guestCountList');
+  const sub = document.getElementById('guestCountSession');
+  if (sub) sub.textContent = currentSession ? `Session: ${currentSession} · ${checkinDate}` : 'Select a session above first';
+  if (!el) return;
+  try {
+    const { data } = await db.from('guest_counts').select('*').eq('date', checkinDate).order('session');
+    if (!data || !data.length) { el.innerHTML = '<div class="rc-empty">No guest counts for today yet.</div>'; return; }
+    el.innerHTML = data.map(g => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;font-size:0.84rem;font-weight:500">${g.session}</div>
+        <span style="font-size:0.78rem;color:#2563EB">👨 ${g.adults} adults</span>
+        <span style="font-size:0.78rem;color:var(--green)">👧 ${g.children} children</span>
+        <span style="font-size:0.78rem;font-weight:700;color:var(--navy)">${g.adults+g.children} total</span>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<div class="rc-empty">Could not load guest counts.</div>'; }
+}
+
+// ══════════════════════════════════════════
+// PHASE 9 — MEMBER ATTENDANCE PROFILE
+// ══════════════════════════════════════════
+
+let currentProfileMemberId = null;
+
+// Called from profile modal Attendance button
+async function openMemberAttendanceProfile() {
+  if (!currentProfileMemberId) return;
+  const m = allMembers.find(x => x.id === currentProfileMemberId);
+  if (!m) return;
+  document.getElementById('attendanceProfileName').textContent = m.full_name;
+  document.getElementById('attendanceProfileSub').textContent = `${m.department||'No dept'} · ${m.member_type||'Member'}`;
+  openModal('memberAttendanceModal');
+  await renderAttendanceProfile(currentProfileMemberId, 'attendanceProfileContent');
+}
+
+async function renderAttendanceProfile(memberId, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div class="spinner" style="margin:0 auto 12px"></div>Loading attendance history...</div>';
+
+  try {
+    const since = new Date(); since.setMonth(since.getMonth() - 6);
+    const { data } = await db.from('attendance').select('date,session').eq('member_id', memberId).gte('date', since.toISOString().split('T')[0]).order('date');
+    const records = data || [];
+
+    // Build month-by-month breakdown
+    const { data: allRecs } = await db.from('attendance').select('date,session').gte('date', since.toISOString().split('T')[0]).order('date');
+    const allRecords = allRecs || [];
+
+    // Get all unique dates with attendance
+    const allDates = [...new Set(allRecords.map(r => r.date))].sort();
+    const myDates = new Set(records.map(r => r.date));
+
+    // Month breakdown (last 6 months)
+    const months = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = d.toISOString().slice(0, 7); // YYYY-MM
+      const monthLabel = d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+      const totalInMonth = allDates.filter(dt => dt.startsWith(monthKey)).length;
+      const attendedInMonth = allDates.filter(dt => dt.startsWith(monthKey) && myDates.has(dt)).length;
+      months.push({ label: monthLabel, total: totalInMonth, attended: attendedInMonth });
+    }
+
+    // Streak calculation
+    const sortedDates = allDates.slice().sort((a,b)=>b.localeCompare(a));
+    let currentStreak = 0, longestStreak = 0, tempStreak = 0;
+    for (const d of sortedDates) {
+      if (myDates.has(d)) { tempStreak++; longestStreak = Math.max(longestStreak, tempStreak); if (currentStreak === tempStreak - 1 || currentStreak === 0 && tempStreak === 1) currentStreak = tempStreak; }
+      else { if (currentStreak === 0) {}; tempStreak = 0; }
+    }
+
+    const totalAttended = records.length;
+    const totalPossible = allDates.length;
+    const pct = totalPossible ? Math.round(totalAttended / totalPossible * 100) : 0;
+    const tier = pct >= 80 ? { label: '🌟 Faithful', color: 'var(--green)' } : pct >= 50 ? { label: '✅ Consistent', color: 'var(--navy)' } : pct >= 25 ? { label: '🟡 Irregular', color: '#D97706' } : { label: '🔴 Needs Follow-up', color: 'var(--red)' };
+
+    // AI-suggested pastoral note
+    let pastoralNote = '';
+    if (pct < 30 && totalPossible > 4) pastoralNote = `"${(allMembers.find(x=>x.id===memberId)||{}).full_name?.split(' ')[0]} hasn't been around much lately. A personal call or visit would mean a lot right now."`;
+    else if (pct >= 90) pastoralNote = `"Outstanding faithfulness — consider recognising ${(allMembers.find(x=>x.id===memberId)||{}).full_name?.split(' ')[0]} publicly this month."`;
+    else if (pct >= 50 && pct < 70) pastoralNote = `"Attending occasionally — ask if service times work for them or if there's anything the church can do better."`;
+
+    // Month bars
+    const maxMonth = Math.max(...months.map(m => m.total), 1);
+    const monthBars = months.map(m => {
+      const pctM = m.total ? Math.round(m.attended / m.total * 100) : 0;
+      const barW = m.total ? Math.round(m.attended / maxMonth * 100) : 0;
+      const barColor = pctM >= 75 ? 'var(--green)' : pctM >= 40 ? 'var(--navy)' : pctM > 0 ? '#D97706' : 'var(--border)';
+      return `<div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:3px">
+          <span style="color:var(--muted)">${m.label}</span>
+          <span style="font-weight:600;color:${barColor}">${m.attended}/${m.total} (${pctM}%)</span>
+        </div>
+        <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+          <div style="width:${barW}%;height:100%;background:${barColor};border-radius:4px;transition:width 0.4s"></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
+        <div class="stat-card"><div class="stat-label">Attendance</div><div class="stat-num" style="color:var(--navy)">${pct}%</div></div>
+        <div class="stat-card"><div class="stat-label">Current Streak</div><div class="stat-num" style="color:var(--green)">${currentStreak}</div></div>
+        <div class="stat-card"><div class="stat-label">Best Streak</div><div class="stat-num">${longestStreak}</div></div>
+      </div>
+      <div style="background:${tier.color}15;border:1.5px solid ${tier.color}40;border-radius:8px;padding:8px 12px;margin-bottom:16px;font-weight:600;font-size:0.84rem;color:${tier.color}">${tier.label}</div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:0.72rem;font-weight:600;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px">Last 6 Months</div>
+        ${monthBars}
+      </div>
+      ${pastoralNote ? `<div style="background:var(--green-faint);border:1.5px solid rgba(13,92,53,0.2);border-radius:10px;padding:12px;font-size:0.82rem;color:var(--green);font-style:italic">💡 Pastoral suggestion: ${pastoralNote}</div>` : ''}
+    `;
+  } catch(e) {
+    el.innerHTML = `<div class="rc-empty">Could not load attendance: ${e.message}</div>`;
+  }
+}
+
+// Member Spotlight in Reports
+async function searchMemberSpotlight() {
+  const q = document.getElementById('spotlightSearch')?.value.toLowerCase().trim();
+  const resultsEl = document.getElementById('spotlightResults');
+  const profileEl = document.getElementById('spotlightProfile');
+  if (!resultsEl) return;
+  if (!q || q.length < 2) { resultsEl.innerHTML = ''; if (profileEl) profileEl.style.display = 'none'; return; }
+  const matches = allMembers.filter(m => m.full_name.toLowerCase().includes(q) || (m.phone||'').includes(q)).slice(0, 8);
+  if (!matches.length) { resultsEl.innerHTML = '<div style="font-size:0.82rem;color:var(--muted);padding:8px 0">No members found</div>'; return; }
+  resultsEl.innerHTML = matches.map(m => `
+    <div onclick="loadMemberSpotlight('${m.id}')" style="padding:8px 10px;cursor:pointer;border-radius:8px;hover:background:rgba(26,31,94,0.04);border-bottom:1px solid var(--border)" onmouseover="this.style.background='rgba(26,31,94,0.04)'" onmouseout="this.style.background=''">
+      <div style="font-weight:500;font-size:0.86rem">${m.full_name}</div>
+      <div style="font-size:0.72rem;color:var(--muted)">${m.department||'No dept'} · ${m.phone||'No phone'}</div>
+    </div>`).join('');
+}
+
+async function loadMemberSpotlight(memberId) {
+  const m = allMembers.find(x => x.id === memberId);
+  if (!m) return;
+  const profileEl = document.getElementById('spotlightProfile');
+  const resultsEl = document.getElementById('spotlightResults');
+  if (resultsEl) resultsEl.innerHTML = `<div style="padding:8px 10px;background:rgba(26,31,94,0.06);border-radius:8px;font-weight:500;font-size:0.86rem;margin-bottom:8px">📊 ${m.full_name}</div>`;
+  if (profileEl) { profileEl.style.display = 'block'; currentProfileMemberId = memberId; }
+  await renderAttendanceProfile(memberId, 'spotlightProfile');
+}
+
+async function shareMemberAttendanceWA() {
+  const m = allMembers.find(x => x.id === currentProfileMemberId);
+  if (!m) return;
+  const church = appSettings.churchName || 'The Precious House';
+  const text = `📊 *${church} — Attendance Report*\n*Member:* ${m.full_name}\n*Dept:* ${m.department||'—'}\n\nThis report was generated by the ${church} Attendance System.\nFor more details, contact your pastor.`;
+  const phone = (m.phone||'').replace(/\D/g,'').replace(/^0/,'234');
+  if (phone) window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+  else { navigator.clipboard.writeText(text); showToast('Report copied to clipboard', 'success'); }
+}
+
+async function exportMemberAttendancePDF() {
+  const m = allMembers.find(x => x.id === currentProfileMemberId);
+  if (!m) return;
+  showToast('Generating PDF...', 'info');
+  const doc = createPDF(`ATTENDANCE PROFILE — ${m.full_name}`, m.department||'');
+  doc.setFontSize(10);
+  doc.setTextColor(30,30,30);
+  doc.text(`Member: ${m.full_name}`, 14, 38);
+  doc.text(`Department: ${m.department||'—'}`, 14, 46);
+  doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, 14, 54);
+  savePDF(doc, `attendance-${m.full_name.replace(/\s+/g,'-').toLowerCase()}`);
+}
+
+// ══════════════════════════════════════════
+// PHASE 11 — SMALL GROUPS
+// ══════════════════════════════════════════
+
+let allGroups = [];
+let currentGroupId = null;
+let editingGroupId = null;
+let selectedGroupMembers = new Set();
+
+function switchCommsTab(tab, btn) {
+  ['comms-messages','comms-groups','comms-report-log','comms-log'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  document.querySelectorAll('#page-comms .settings-nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  const map = { messages: 'comms-messages', groups: 'comms-groups', report: 'comms-report-log', log: 'comms-log' };
+  const target = document.getElementById(map[tab]);
+  if (target) target.style.display = 'block';
+  if (tab === 'groups') loadGroups();
+  if (tab === 'report') populateReportSessionInComms();
+}
+
+async function loadGroups() {
+  const el = document.getElementById('groupsList');
+  if (!el) return;
+  el.innerHTML = '<div class="rc-empty"><div class="spinner" style="margin:0 auto 8px"></div>Loading...</div>';
+  try {
+    const { data } = await db.from('groups_tph').select('*').order('created_at', { ascending: false });
+    allGroups = data || [];
+    renderGroupsList();
+  } catch(e) { el.innerHTML = '<div class="rc-empty">Could not load groups.</div>'; }
+}
+
+function renderGroupsList() {
+  const el = document.getElementById('groupsList');
+  if (!el) return;
+  if (!allGroups.length) { el.innerHTML = '<div class="rc-empty">No groups yet. Create one to get started.</div>'; return; }
+  const active = allGroups.filter(g => g.status === 'active');
+  const archived = allGroups.filter(g => g.status !== 'active');
+
+  let html = '';
+  if (active.length) {
+    html += `<div style="font-size:0.7rem;font-weight:600;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px">Active (${active.length})</div>`;
+    html += active.map(g => renderGroupCard(g)).join('');
+  }
+  if (archived.length) {
+    html += `<div style="font-size:0.7rem;font-weight:600;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin:16px 0 10px">Archived (${archived.length})</div>`;
+    html += archived.map(g => renderGroupCard(g, true)).join('');
+  }
+  el.innerHTML = html;
+}
+
+function renderGroupCard(g, archived=false) {
+  const members = g.members || [];
+  const tasks = g.tasks || [];
+  const doneTasks = tasks.filter(t => t.done).length;
+  const progress = tasks.length ? Math.round(doneTasks / tasks.length * 100) : 0;
+  const endDate = g.end_date ? new Date(g.end_date + 'T12:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'short' }) : null;
+  return `<div style="background:white;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer${archived?';opacity:0.65':''}" onclick="openGroupDetail('${g.id}')">
+    <div style="display:flex;align-items:flex-start;gap:10px">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:0.92rem;color:var(--navy)">${g.name}</div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:2px">${g.purpose||'No purpose set'}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <span style="font-size:0.72rem;color:var(--muted)">👥 ${members.length} member${members.length!==1?'s':''}</span>
+          ${tasks.length ? `<span style="font-size:0.72rem;color:var(--muted)">✅ ${doneTasks}/${tasks.length} tasks</span>` : ''}
+          ${endDate ? `<span style="font-size:0.72rem;color:${archived?'var(--muted)':'var(--red)'}">📅 ${endDate}</span>` : ''}
+        </div>
+      </div>
+      ${tasks.length ? `<div style="text-align:right;flex-shrink:0">
+        <div style="font-size:1.1rem;font-weight:700;color:${progress===100?'var(--green)':'var(--navy)'}">${progress}%</div>
+        <div style="width:48px;height:4px;background:var(--border);border-radius:2px;margin-top:4px">
+          <div style="width:${progress}%;height:100%;background:${progress===100?'var(--green)':'var(--navy)'};border-radius:2px"></div>
+        </div>
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+
+function openCreateGroupModal() {
+  editingGroupId = null;
+  selectedGroupMembers = new Set();
+  document.getElementById('groupModalTitle').textContent = 'Create Group';
+  ['grp_name','grp_purpose','grp_end_date'].forEach(id => { const e=document.getElementById(id); if(e)e.value=''; });
+  document.getElementById('grp_status').value = 'active';
+  renderGroupMemberPicker();
+  openModal('createGroupModal');
+}
+
+function renderGroupMemberPicker() {
+  const el = document.getElementById('grpMemberPicker');
+  if (!el) return;
+  el.innerHTML = allMembers.filter(m=>m.is_active).sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(m => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;cursor:pointer;border-bottom:1px solid var(--border)">
+      <input type="checkbox" value="${m.id}" ${selectedGroupMembers.has(m.id)?'checked':''} onchange="toggleGroupMember('${m.id}',this.checked)" style="cursor:pointer;accent-color:var(--navy)">
+      <div>
+        <div style="font-size:0.84rem;font-weight:500">${m.full_name}</div>
+        <div style="font-size:0.7rem;color:var(--muted)">${m.department||'No dept'}</div>
+      </div>
+    </label>`).join('');
+}
+
+function toggleGroupMember(id, checked) {
+  if (checked) selectedGroupMembers.add(id);
+  else selectedGroupMembers.delete(id);
+}
+
+async function saveGroup() {
+  const name = document.getElementById('grp_name').value.trim();
+  if (!name) { showToast('Group name required', 'error'); return; }
+  const memberList = allMembers.filter(m => selectedGroupMembers.has(m.id)).map(m => ({ id: m.id, name: m.full_name, phone: m.phone, dept: m.department }));
+  const payload = {
+    name,
+    purpose: document.getElementById('grp_purpose').value.trim() || null,
+    end_date: document.getElementById('grp_end_date').value || null,
+    status: document.getElementById('grp_status').value,
+    members: memberList,
+    created_by: currentUser?.username || 'admin'
+  };
+  try {
+    if (editingGroupId) {
+      await db.from('groups_tph').update(payload).eq('id', editingGroupId);
+      showToast('Group updated', 'success');
+    } else {
+      payload.tasks = [];
+      await db.from('groups_tph').insert([payload]);
+      showToast(`"${name}" group created`, 'success');
+      logActivity(`Group created: ${name}`, 'success');
+    }
+    closeModal('createGroupModal');
+    loadGroups();
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+function openGroupDetail(id) {
+  const g = allGroups.find(x => x.id === id);
+  if (!g) return;
+  currentGroupId = id;
+  document.getElementById('groupDetailName').textContent = g.name;
+  document.getElementById('groupDetailPurpose').textContent = g.purpose || '';
+  document.getElementById('archiveGroupBtn').textContent = g.status === 'active' ? '📦 Archive' : '♻️ Restore';
+  renderGroupDetailContent(g);
+  openModal('groupDetailModal');
+}
+
+function renderGroupDetailContent(g) {
+  const el = document.getElementById('groupDetailContent');
+  if (!el) return;
+  const tasks = g.tasks || [];
+  const members = g.members || [];
+  const doneTasks = tasks.filter(t=>t.done).length;
+
+  el.innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:0.72rem;font-weight:600;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase">Members (${members.length})</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${members.map(m => `<span style="background:rgba(26,31,94,0.08);color:var(--navy);border-radius:20px;padding:3px 10px;font-size:0.78rem">${m.name}</span>`).join('') || '<span style="font-size:0.82rem;color:var(--muted)">No members yet</span>'}</div>
+    </div>
+
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:0.72rem;font-weight:600;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase">Tasks ${tasks.length?`(${doneTasks}/${tasks.length})`:''}
+        </div>
+        <button class="btn btn-ghost" style="font-size:0.76rem;padding:4px 10px" onclick="addGroupTask('${g.id}')">+ Add Task</button>
+      </div>
+      ${tasks.length ? `
+        <div style="margin-bottom:8px;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+          <div style="width:${tasks.length?Math.round(doneTasks/tasks.length*100):0}%;height:100%;background:var(--green);border-radius:3px"></div>
+        </div>` : ''}
+      <div id="groupTasksList">${tasks.map((t,i) => `
+        <label style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" ${t.done?'checked':''} onchange="toggleGroupTask('${g.id}',${i},this.checked)" style="cursor:pointer;accent-color:var(--green)">
+          <span style="font-size:0.84rem;${t.done?'text-decoration:line-through;color:var(--muted)':''}">${t.text}</span>
+          ${t.assignee?`<span style="font-size:0.7rem;color:var(--muted);margin-left:auto">${t.assignee}</span>`:''}
+        </label>`).join('') || '<div style="font-size:0.82rem;color:var(--muted);padding:8px 0">No tasks yet</div>'}
+      </div>
+    </div>
+  `;
+}
+
+async function addGroupTask(groupId) {
+  const text = prompt('Task description:');
+  if (!text?.trim()) return;
+  const assignee = prompt('Assign to (member name, optional):') || '';
+  const g = allGroups.find(x => x.id === groupId);
+  if (!g) return;
+  const tasks = [...(g.tasks||[]), { text: text.trim(), done: false, assignee: assignee.trim() || null, created: new Date().toISOString() }];
+  await db.from('groups_tph').update({ tasks }).eq('id', groupId);
+  g.tasks = tasks;
+  renderGroupDetailContent(g);
+  showToast('Task added', 'success');
+  renderGroupsList();
+}
+
+async function toggleGroupTask(groupId, index, done) {
+  const g = allGroups.find(x => x.id === groupId);
+  if (!g) return;
+  const tasks = [...(g.tasks||[])];
+  tasks[index] = { ...tasks[index], done };
+  await db.from('groups_tph').update({ tasks }).eq('id', groupId);
+  g.tasks = tasks;
+  renderGroupDetailContent(g);
+  renderGroupsList();
+  const total = tasks.length, doneTasks = tasks.filter(t=>t.done).length;
+  if (doneTasks === total && total > 0) setTimeout(() => showToast(`🎉 All tasks complete in "${g.name}"!`, 'success'), 200);
+  else if (doneTasks === Math.floor(total/2) && total > 1) setTimeout(() => showToast(`💪 Halfway there — ${doneTasks}/${total} tasks done in "${g.name}"`, 'info'), 200);
+}
+
+async function openEditGroupModal() {
+  const g = allGroups.find(x => x.id === currentGroupId);
+  if (!g) return;
+  editingGroupId = currentGroupId;
+  selectedGroupMembers = new Set((g.members||[]).map(m=>m.id));
+  document.getElementById('groupModalTitle').textContent = 'Edit Group';
+  document.getElementById('grp_name').value = g.name;
+  document.getElementById('grp_purpose').value = g.purpose || '';
+  document.getElementById('grp_end_date').value = g.end_date || '';
+  document.getElementById('grp_status').value = g.status || 'active';
+  renderGroupMemberPicker();
+  closeModal('groupDetailModal');
+  openModal('createGroupModal');
+}
+
+async function archiveGroup() {
+  const g = allGroups.find(x => x.id === currentGroupId);
+  if (!g) return;
+  const newStatus = g.status === 'active' ? 'archived' : 'active';
+  const action = newStatus === 'archived' ? 'archive' : 'restore';
+  if (!confirm(`${action.charAt(0).toUpperCase()+action.slice(1)} "${g.name}"?`)) return;
+
+  if (newStatus === 'archived') {
+    // Generate completion summary
+    const tasks = g.tasks || [];
+    const done = tasks.filter(t=>t.done).length;
+    const members = g.members || [];
+    const summary = `📦 Group "${g.name}" completed!\n\n👥 Members: ${members.map(m=>m.name).join(', ')}\n✅ Tasks: ${done}/${tasks.length} completed\n📅 Archived: ${new Date().toLocaleDateString('en-GB')}`;
+    await db.from('groups_tph').update({ status: 'archived', archived_at: new Date().toISOString() }).eq('id', currentGroupId);
+    logActivity(`Group archived: ${g.name}`, 'info');
+    closeModal('groupDetailModal');
+    showToast(`"${g.name}" archived`, 'success');
+    // Show summary
+    if (confirm('View completion summary?')) {
+      navigator.clipboard.writeText(summary).then(() => showToast('Completion summary copied!', 'success'));
+    }
+  } else {
+    await db.from('groups_tph').update({ status: 'active', archived_at: null }).eq('id', currentGroupId);
+    closeModal('groupDetailModal');
+    showToast(`"${g.name}" restored`, 'success');
+  }
+  loadGroups();
+}
+
+function openGroupWhatsApp() {
+  const g = allGroups.find(x => x.id === currentGroupId);
+  if (!g) return;
+  const message = document.getElementById('grp_message_text')?.value ||
+    `Hi {name}! This is a message from the ${appSettings.churchName||'The Precious House'} ${g.name} group.`;
+  const members = (g.members||[]).filter(m=>m.phone);
+  if (!members.length) { showToast('No members with phone numbers in this group', 'error'); return; }
+  members.forEach((m,i) => {
+    setTimeout(() => {
+      const phone = m.phone.replace(/\D/g,'').replace(/^0/,'234');
+      const msg = message.replace(/{name}/g, m.name.split(' ')[0]);
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    }, i * 700);
+  });
+  showToast(`Opening ${members.length} WhatsApp chats`, 'success');
+  logSend('group', `Group message to ${g.name} (${members.length} members)`);
+}
+
+
 </script>
 
 
@@ -5222,8 +6606,15 @@ async function approveAllPending() {
           <div class="form-group full"><label class="form-label">Full Name *</label><input class="form-input" id="sr_name" placeholder="Your full name"></div>
           <div class="form-group"><label class="form-label">Phone Number *</label><input class="form-input" id="sr_phone" placeholder="08012345678" type="tel"></div>
           <div class="form-group"><label class="form-label">Email Address</label><input class="form-input" id="sr_email" placeholder="you@email.com" type="email"></div>
-          <div class="form-group"><label class="form-label">Date of Birth</label><input class="form-input" id="sr_dob" type="date"></div>
+          <div class="form-group"><label class="form-label">Date of Birth</label><input class="form-input" id="sr_dob" type="date" onchange="srAutoCategory()"></div>
           <div class="form-group"><label class="form-label">Gender</label><select class="form-select" id="sr_gender"><option value="">Select...</option><option>Male</option><option>Female</option></select></div>
+          <div class="form-group"><label class="form-label">Member Category</label>
+            <select class="form-select" id="sr_category" onchange="toggleSrPin()">
+              <option value="Adult">Adult</option>
+              <option value="Youth">Youth (13–25)</option>
+              <option value="Child">Child (under 13)</option>
+            </select>
+          </div>
           <div class="form-group"><label class="form-label">Marital Status</label><select class="form-select" id="sr_marital"><option value="">Select...</option><option>Single</option><option>Married</option><option>Widowed</option><option>Divorced</option></select></div>
           <div class="form-group full"><label class="form-label">Home Address</label><input class="form-input" id="sr_address" placeholder="Street, City"></div>
         </div>
@@ -5239,7 +6630,7 @@ async function approveAllPending() {
               <option>Choir</option><option>Ushers</option><option>Media & Tech</option>
               <option>Children's Church</option><option>Youth</option><option>Women's Fellowship</option>
               <option>Men's Fellowship</option><option>Protocol</option><option>Prayer Team</option>
-              <option>Workers</option><option>General Member</option>
+              <option>General Member</option>
             </select>
           </div>
           <div class="form-group"><label class="form-label">How did you hear about us?</label>
@@ -5259,9 +6650,9 @@ async function approveAllPending() {
         </div>
       </div>
 
-      <div class="self-reg-card">
+      <div class="self-reg-card" id="srPinCard">
         <div class="form-section-title" style="font-size:0.95rem">🔐 Check-in PIN</div>
-        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px">Choose a 4-digit PIN you'll use to mark your attendance every Sunday.</p>
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px">Choose a 4-digit PIN you'll use to mark your attendance. <strong>Children do not need a PIN.</strong></p>
         <div class="form-grid" style="margin-top:0">
           <div class="form-group">
             <label class="form-label">4-Digit PIN *</label>
@@ -5389,6 +6780,136 @@ async function approveAllPending() {
     <span>More</span>
   </button>
 </nav>
+
+
+<!-- ADD VISITOR MODAL -->
+<div class="modal-backdrop" id="addVisitorModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div><div class="modal-title">Log Visitor</div><div class="modal-sub">Record a new visitor's details</div></div>
+      <button class="modal-close" onclick="closeModal('addVisitorModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Full Name *</label>
+          <input class="form-input" id="vis_name" placeholder="Visitor's full name"></div>
+        <div class="form-group"><label class="form-label">Phone</label>
+          <input class="form-input" id="vis_phone" type="tel" placeholder="Phone number"></div>
+        <div class="form-group"><label class="form-label">Gender</label>
+          <select class="form-select" id="vis_gender">
+            <option value="">Select...</option><option>Male</option><option>Female</option>
+          </select></div>
+        <div class="form-group full"><label class="form-label">Address</label>
+          <input class="form-input" id="vis_address" placeholder="Home address"></div>
+        <div class="form-group"><label class="form-label">Referred by (member name)</label>
+          <input class="form-input" id="vis_referrer" placeholder="Who brought them?"></div>
+        <div class="form-group"><label class="form-label">How they heard</label>
+          <select class="form-select" id="vis_source">
+            <option value="">Select...</option>
+            <option>Referred by member</option><option>Social media</option>
+            <option>Walked in</option><option>Flyer/poster</option><option>Online search</option><option>Other</option>
+          </select></div>
+        <div class="form-group full"><label class="form-label">Notes</label>
+          <input class="form-input" id="vis_notes" placeholder="Any notes about this visitor"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addVisitorModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveVisitor()">Log Visitor</button>
+    </div>
+  </div>
+</div>
+
+<!-- VISITOR PROFILE MODAL -->
+<div class="modal-backdrop" id="visitorProfileModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <div><div class="modal-title">Visitor Profile</div></div>
+      <button class="modal-close" onclick="closeModal('visitorProfileModal')">✕</button>
+    </div>
+    <div class="modal-body" id="visitorProfileContent"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('visitorProfileModal')">Close</button>
+      <button class="btn btn-ghost" id="visitorProspectBtn" style="color:var(--green);border-color:var(--green)">Mark as Prospect</button>
+      <button class="btn btn-primary" id="visitorConvertBtn">Invite to Register →</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MEMBER ATTENDANCE PROFILE MODAL -->
+<div class="modal-backdrop" id="memberAttendanceModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div><div class="modal-title" id="attendanceProfileName">Attendance Profile</div>
+        <div class="modal-sub" id="attendanceProfileSub"></div></div>
+      <button class="modal-close" onclick="closeModal('memberAttendanceModal')">✕</button>
+    </div>
+    <div class="modal-body" id="attendanceProfileContent">
+      <div style="text-align:center;padding:40px;color:var(--muted)">Loading...</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('memberAttendanceModal')">Close</button>
+      <button class="btn btn-ghost" onclick="exportMemberAttendancePDF()">⬇ PDF</button>
+      <button class="btn btn-primary" onclick="shareMemberAttendanceWA()">💬 Send via WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- CREATE GROUP MODAL -->
+<div class="modal-backdrop" id="createGroupModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div><div class="modal-title" id="groupModalTitle">Create Group</div>
+        <div class="modal-sub">Temporary team for a project or event</div></div>
+      <button class="modal-close" onclick="closeModal('createGroupModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Group Name *</label>
+          <input class="form-input" id="grp_name" placeholder="e.g. Easter Planning Team"></div>
+        <div class="form-group full"><label class="form-label">Purpose</label>
+          <input class="form-input" id="grp_purpose" placeholder="What is this group for?"></div>
+        <div class="form-group"><label class="form-label">End Date (optional)</label>
+          <input class="form-input" id="grp_end_date" type="date"></div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-select" id="grp_status">
+            <option value="active">Active</option>
+            <option value="archived">Archived</option>
+          </select></div>
+        <div class="form-group full">
+          <label class="form-label">Members</label>
+          <div id="grpMemberPicker" style="max-height:160px;overflow-y:auto;border:1.5px solid var(--border);border-radius:8px;padding:8px">
+            <div style="color:var(--muted);font-size:0.82rem;padding:8px">Loading members...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('createGroupModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGroup()">Save Group</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP DETAIL MODAL -->
+<div class="modal-backdrop" id="groupDetailModal">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-header">
+      <div><div class="modal-title" id="groupDetailName">Group</div>
+        <div class="modal-sub" id="groupDetailPurpose"></div></div>
+      <button class="modal-close" onclick="closeModal('groupDetailModal')">✕</button>
+    </div>
+    <div class="modal-body" id="groupDetailContent"></div>
+    <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
+      <button class="btn btn-ghost" onclick="closeModal('groupDetailModal')">Close</button>
+      <button class="btn btn-ghost" onclick="openEditGroupModal()">✏️ Edit</button>
+      <button class="btn btn-ghost" onclick="openGroupWhatsApp()">💬 Message Group</button>
+      <button class="btn btn-danger" id="archiveGroupBtn" onclick="archiveGroup()">📦 Archive</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
