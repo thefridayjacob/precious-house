@@ -6,9 +6,9 @@
 <title>The Precious House — Member Registry</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&family=Lexend+Deca:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
 <style>
 :root {
   /* ── TPH Brand Palette ── */
@@ -3522,20 +3522,12 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
       </div>
       <div class="form-section-title">⛪ Church Information</div>
       <div class="form-grid">
-        <div class="form-group"><label class="form-label">Department / Unit</label>
-          <select class="form-select" id="f_dept" multiple style="height:120px;padding:6px">
-            <option>Choir</option>
-            <option>Ushers</option>
-            <option>Media & Tech</option>
-            <option>Children's Church</option>
-            <option>Youth</option>
-            <option>Women's Fellowship</option>
-            <option>Men's Fellowship</option>
-            <option>Protocol</option>
-            <option>Prayer Team</option>
-            <option>General Member</option>
-          </select>
-          <div style="font-size:0.7rem;color:var(--muted);margin-top:4px">Hold Ctrl / Cmd to select multiple departments</div>
+        <div class="form-group full"><label class="form-label">Department / Unit</label>
+          <div id="f_dept_checks" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px;border:1.5px solid var(--border);border-radius:8px;min-height:46px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+            <span style="font-size:0.7rem;color:var(--muted)">Select all that apply</span>
+            <button type="button" class="btn btn-ghost" style="font-size:0.72rem;padding:3px 8px;line-height:1.4" onclick="quickAddDept()">+ New Department</button>
+          </div>
         </div>
         <div class="form-group"><label class="form-label">Date Joined</label><input class="form-input" id="f_joined" type="date"></div>
         <div class="form-group"><label class="form-label">Member Type</label>
@@ -3552,6 +3544,15 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
           </select>
         </div>
         <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="f_status"><option value="true">Active</option><option value="false">Inactive</option></select></div>
+        <div class="form-group full">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 14px;background:rgba(26,31,94,0.04);border-radius:8px;border:1.5px solid var(--border)">
+            <input type="checkbox" id="f_assisted" style="width:16px;height:16px;cursor:pointer;accent-color:var(--navy)">
+            <div>
+              <div style="font-size:0.84rem;font-weight:600;color:var(--navy)">Assisted Check-in</div>
+              <div style="font-size:0.72rem;color:var(--muted)">Tap to mark present — no PIN required. For elders or anyone who needs help.</div>
+            </div>
+          </label>
+        </div>
       </div>
       <div id="memberPinRow"><div class="form-section-title">🔐 Check-in PIN</div>
       <div class="form-grid">
@@ -4061,21 +4062,24 @@ function openAddModal() {
   document.getElementById('saveMemberBtn').textContent='Save Member';
   document.getElementById('f_joined').value=new Date().toISOString().split('T')[0];
   document.getElementById('photoPreview').innerHTML='<span class="photo-preview-placeholder">👤</span>';
+  populateDeptSelects();
   openModal('memberModal');
 }
 
 function openEditModal(id) {
   const m=allMembers.find(x=>x.id===id); if(!m) return;
   editingId=id; photoDataUrl=null; clearForm();
+  populateDeptSelects();
   document.getElementById('modalTitle').textContent='Edit Member';
   document.getElementById('modalSub').textContent=m.full_name;
   document.getElementById('saveMemberBtn').textContent='Update Member';
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v||'';};
   set('f_name',m.full_name); set('f_phone',m.phone); set('f_email',m.email);
   set('f_dob',m.date_of_birth); set('f_gender',m.gender); set('f_marital',m.marital_status);
-  set('f_address',m.address); (()=>{ const dEl=document.getElementById('f_dept'); if(dEl&&m.department){ const ds=m.department.split(',').map(d=>d.trim()); Array.from(dEl.options).forEach(o=>{ o.selected=ds.includes(o.value); }); }})(); set('f_joined',m.date_joined);
+  set('f_address',m.address); (()=>{ const ds=m.department?m.department.split(',').map(d=>d.trim()):[]; const checks=document.getElementById('f_dept_checks'); if(checks){checks.querySelectorAll('input[type=checkbox]').forEach(cb=>{cb.checked=ds.length?ds.includes(cb.value):(cb.value==='__general__');});} })(); set('f_joined',m.date_joined);
   set('f_type',m.member_type); set('f_category',m.member_category||'Adult');
   set('f_status',String(m.is_active!==false));
+  const fa=document.getElementById('f_assisted'); if(fa) fa.checked=m.assisted_checkin||false;
   set('f_kin_name',m.next_of_kin_name); set('f_kin_phone',m.next_of_kin_phone); set('f_kin_rel',m.next_of_kin_relationship);
   if (m.photo_url) document.getElementById('photoPreview').innerHTML=`<img src="${m.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
   else { const i=m.full_name?.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?'; document.getElementById('photoPreview').innerHTML=`<div style="font-family:'Lexend',sans-serif;font-size:1.6rem;font-weight:700;color:var(--navy)">${i}</div>`; }
@@ -4085,7 +4089,7 @@ function openEditModal(id) {
 function clearForm() {
   ['f_name','f_phone','f_email','f_dob','f_address','f_joined','f_kin_name','f_kin_phone','f_pin','f_pin_confirm'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   ['f_gender','f_marital','f_type','f_kin_rel'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-  const deptEl=document.getElementById('f_dept');if(deptEl)Array.from(deptEl.options).forEach(o=>o.selected=false);
+  const checks=document.getElementById('f_dept_checks');if(checks){checks.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.checked=false);const gen=checks.querySelector('input[value="__general__"]');if(gen)gen.checked=true;}
   const fc=document.getElementById('f_category'); if(fc) fc.value='Adult';
   const fs=document.getElementById('f_status'); if(fs) fs.value='true';
 }
@@ -4110,10 +4114,11 @@ async function saveMember() {
       full_name:name, phone:document.getElementById('f_phone').value.trim()||null,
       email:document.getElementById('f_email').value.trim()||null, date_of_birth:document.getElementById('f_dob').value||null,
       gender:document.getElementById('f_gender').value||null, marital_status:document.getElementById('f_marital').value||null,
-      address:document.getElementById('f_address').value.trim()||null, department:Array.from(document.getElementById('f_dept')?.selectedOptions||[]).map(o=>o.value).filter(Boolean).join(', ')||null,
+      address:document.getElementById('f_address').value.trim()||null, department:getDeptChecked().join(', ')||null,
       date_joined:document.getElementById('f_joined').value||null, member_type:document.getElementById('f_type').value||null,
       member_category:document.getElementById('f_category')?.value||'Adult',
       is_active:document.getElementById('f_status').value==='true',
+      assisted_checkin:document.getElementById('f_assisted')?.checked||false,
       next_of_kin_name:document.getElementById('f_kin_name').value.trim()||null,
       next_of_kin_phone:document.getElementById('f_kin_phone').value.trim()||null,
       next_of_kin_relationship:document.getElementById('f_kin_rel').value||null, photo_url:photoUrl,
@@ -4327,7 +4332,7 @@ function renderCheckinGrid() {
     const photo=m.photo_url?`<img class="cc-photo" src="${m.photo_url}" onerror="this.outerHTML='<div class=\\'cc-initials\\'>${initials}</div>'">`:`<div class="cc-initials">${initials}</div>`;
     const isChild = isChildMember(m);
     const pinStatus = present ? '✅ Present' : isChild ? '👆 Tap to mark' : m.pin_hash ? '🔐 PIN set' : '⚠ No PIN';
-    const clickFn = (isChild && !present) ? `markChildPresent('${m.id}')` : `openPinModal('${m.id}')`;
+    const clickFn = isChild ? `markChildPresent('${m.id}')` : `openPinModal('${m.id}')`;
     return `<div class="checkin-card ${present?'present':''}" onclick="${clickFn}">${photo}<div class="cc-info"><div class="cc-name">${m.full_name}</div><div class="cc-dept">${m.department||'No dept'}</div><div class="cc-pin">${pinStatus}</div></div></div>`;
   }).join('');
 }
@@ -4565,7 +4570,7 @@ function renderRecentSundays(){
   el.innerHTML=recentDates.map(date=>{const rows=allAttendance.filter(r=>r.date===date),unique=new Set(rows.map(r=>r.member_id)).size,pct=activeCount?Math.round(unique/activeCount*100):0;const d=new Date(date+'T12:00:00'),label=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});const sessions=[...new Set(rows.map(r=>r.session))];return`<div class="session-bar-row"><div class="sb-label" style="width:70px;font-size:0.8rem">${label}</div><div style="font-size:0.68rem;color:var(--warm-gray);width:80px;flex-shrink:0">${sessions.length} session${sessions.length!==1?'s':''}</div><div class="sb-bar-wrap"><div class="sb-bar" style="width:${pct}%;background:${pct>=70?'var(--present)':pct>=40?'var(--green)':'var(--danger)'}"></div></div><div class="sb-num" style="color:${pct>=70?'var(--present)':pct>=40?'var(--navy)':'var(--danger)'}">${unique}</div></div>`;}).join('');
 }
 
-function populateConsistencyDeptFilter(){const sel=document.getElementById('consistencyDept');if(!sel)return;const depts=[...new Set(allMembers.map(m=>m.department).filter(Boolean))].sort();sel.innerHTML='<option value="">All Depts</option>'+depts.map(d=>`<option value="${d}">${d}</option>`).join('');}
+function populateConsistencyDeptFilter(){const sel=document.getElementById('consistencyDept');if(!sel)return;const depts=[...new Set(allMembers.flatMap(m=>m.department?m.department.split(',').map(d=>d.trim()):[]).filter(Boolean))].sort();sel.innerHTML='<option value="">All Depts</option>'+depts.map(d=>`<option value="${d}">${d}</option>`).join('');}
 
 function renderConsistencyTable(){
   const q=(document.getElementById('consistencySearch')?.value||'').toLowerCase(),dept=document.getElementById('consistencyDept')?.value||'';
@@ -4698,9 +4703,74 @@ const DEPT_ICONS={'Choir':'🎵','Ushers':'🤝','Media & Tech':'🎥',"Children
 let departments=JSON.parse(localStorage.getItem('tph_departments')||'[]');
 let editingDeptName=null;
 function saveDepts(){localStorage.setItem('tph_departments',JSON.stringify(departments));}
+function populateDeptSelects(){
+  if(!departments.length){
+    ['Choir','Ushers','Media & Tech',"Children's Church",'Youth',"Women's Fellowship","Men's Fellowship",'Protocol','Prayer Team'].forEach(name=>{
+      departments.push({name,desc:'',icon:DEPT_ICONS[name]||'🏛',lead:'',lead_phone:'',created:new Date().toISOString()});
+    });
+    saveDepts();
+  }
+  const sorted=departments.slice().sort((a,b)=>a.name.localeCompare(b.name));
+  const checks=document.getElementById('f_dept_checks');
+  if(checks){
+    const prev=getDeptChecked();
+    checks.innerHTML=`<label style="display:flex;align-items:center;gap:5px;padding:5px 11px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:0.8rem;user-select:none;background:var(--green-faint)"><input type="checkbox" value="__general__" onchange="onDeptCheck(this)" style="cursor:pointer"> 👤 General Member</label>`
+      +sorted.map(d=>`<label style="display:flex;align-items:center;gap:5px;padding:5px 11px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:0.8rem;user-select:none;background:#fff"><input type="checkbox" value="${d.name}" onchange="onDeptCheck(this)" style="cursor:pointer"> ${d.icon||'🏛'} ${d.name}</label>`).join('');
+    if(prev.length){prev.forEach(v=>{const cb=checks.querySelector(`input[value="${CSS.escape(v)}"]`);if(cb)cb.checked=true;});}
+    else{const gen=checks.querySelector('input[value="__general__"]');if(gen)gen.checked=true;}
+  }
+  const srChecks=document.getElementById('sr_dept_checks');
+  if(srChecks){
+    const prevSr=getSrDeptChecked();
+    srChecks.innerHTML=`<label style="display:flex;align-items:center;gap:5px;padding:5px 11px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:0.8rem;user-select:none;background:var(--green-faint)"><input type="checkbox" value="__general__" onchange="onSrDeptCheck(this)" style="cursor:pointer"> 👤 General Member</label>`
+      +sorted.map(d=>`<label style="display:flex;align-items:center;gap:5px;padding:5px 11px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:0.8rem;user-select:none;background:#fff"><input type="checkbox" value="${d.name}" onchange="onSrDeptCheck(this)" style="cursor:pointer"> ${d.icon||'🏛'} ${d.name}</label>`).join('');
+    if(prevSr.length){prevSr.forEach(v=>{const cb=srChecks.querySelector(`input[value="${CSS.escape(v)}"]`);if(cb)cb.checked=true;});}
+    else{const gen=srChecks.querySelector('input[value="__general__"]');if(gen)gen.checked=true;}
+  }
+}
+function getDeptChecked(){
+  return Array.from(document.querySelectorAll('#f_dept_checks input[type=checkbox]:checked')).map(c=>c.value).filter(v=>v!=='__general__');
+}
+function onDeptCheck(el){
+  const checks=document.getElementById('f_dept_checks');if(!checks)return;
+  if(el.value==='__general__'){
+    if(el.checked)checks.querySelectorAll('input[type=checkbox]').forEach(c=>{if(c!==el)c.checked=false;});
+  } else {
+    if(el.checked){const gen=checks.querySelector('input[value="__general__"]');if(gen)gen.checked=false;}
+  }
+}
+function getSrDeptChecked(){
+  return Array.from(document.querySelectorAll('#sr_dept_checks input[type=checkbox]:checked')).map(c=>c.value).filter(v=>v!=='__general__');
+}
+function onSrDeptCheck(el){
+  const checks=document.getElementById('sr_dept_checks');if(!checks)return;
+  if(el.value==='__general__'){
+    if(el.checked)checks.querySelectorAll('input[type=checkbox]').forEach(c=>{if(c!==el)c.checked=false;});
+  } else {
+    if(el.checked){const gen=checks.querySelector('input[value="__general__"]');if(gen)gen.checked=false;}
+  }
+}
+function quickAddDept(){
+  const name=(prompt('New department name:')||'').trim();
+  if(!name)return;
+  if(departments.find(d=>d.name===name)){showToast('Department already exists','info');return;}
+  departments.push({name,desc:'',icon:'🏛',lead:'',lead_phone:'',created:new Date().toISOString()});
+  saveDepts();populateDeptSelects();
+  const checks=document.getElementById('f_dept_checks');
+  if(checks){
+    const gen=checks.querySelector('input[value="__general__"]');if(gen)gen.checked=false;
+    const cb=checks.querySelector(`input[value="${CSS.escape(name)}"]`);if(cb)cb.checked=true;
+  }
+  showToast(`${name} created`,'success');
+}
 
 function initDepartments(){
-  const memberDepts=[...new Set(allMembers.map(m=>m.department).filter(Boolean))];
+  if(!departments.length){
+    ['Choir','Ushers','Media & Tech','Children\'s Church','Youth','Women\'s Fellowship','Men\'s Fellowship','Protocol','Prayer Team'].forEach(name=>{
+      departments.push({name,desc:'',icon:DEPT_ICONS[name]||'🏛',lead:'',lead_phone:'',created:new Date().toISOString()});
+    });
+  }
+  const memberDepts=[...new Set(allMembers.flatMap(m=>m.department?m.department.split(',').map(d=>d.trim()):[]).filter(Boolean))];
   memberDepts.forEach(name=>{if(!departments.find(d=>d.name===name))departments.push({name,desc:'',icon:DEPT_ICONS[name]||'🏛',lead:'',lead_phone:'',created:new Date().toISOString()});});
   saveDepts();renderDepartments();
 }
@@ -4709,7 +4779,7 @@ function renderDepartments(){
   const q=(document.getElementById('deptSearch')?.value||'').toLowerCase();
   const grid=document.getElementById('deptCardsGrid');if(!grid)return;
   const filtered=departments.filter(d=>!q||d.name.toLowerCase().includes(q));
-  const mdm={};allMembers.filter(m=>m.is_active).forEach(m=>{if(m.department){mdm[m.department]=mdm[m.department]||[];mdm[m.department].push(m);}});
+  const mdm={};allMembers.filter(m=>m.is_active).forEach(m=>{if(m.department){m.department.split(',').map(d=>d.trim()).filter(Boolean).forEach(dept=>{mdm[dept]=mdm[dept]||[];mdm[dept].push(m);});}});
   const totalAssigned=allMembers.filter(m=>m.is_active&&m.department).length;
   const unassigned=allMembers.filter(m=>m.is_active&&!m.department).length;
   const largest=Object.entries(mdm).sort((a,b)=>b[1].length-a[1].length)[0];
@@ -4730,12 +4800,12 @@ function saveDept(){
   const dept={name,desc:document.getElementById('d_desc').value.trim(),icon:document.getElementById('d_icon').value.trim()||DEPT_ICONS[name]||'🏛',lead:document.getElementById('d_lead').value.trim(),lead_phone:document.getElementById('d_lead_phone').value.trim(),created:new Date().toISOString()};
   if(editingDeptName){const idx=departments.findIndex(d=>d.name===editingDeptName);if(idx!==-1)departments[idx]=dept;if(editingDeptName!==name){allMembers.forEach(m=>{if(m.department===editingDeptName){db.from('members').update({department:name}).eq('id',m.id).then(()=>{});m.department=name;}});}showToast(`${name} updated`,'success');}
   else{if(departments.find(d=>d.name===name)){showToast('Already exists','error');return;}departments.push(dept);showToast(`${name} created`,'success');}
-  saveDepts();closeModal('deptModal');renderDepartments();
+  saveDepts();closeModal('deptModal');renderDepartments();populateDeptSelects();
 }
-function deleteDept(name){const members=allMembers.filter(m=>m.department===name);if(!confirm(`Delete "${name}"?${members.length?'\n\n'+members.length+' member(s) will become unassigned.':''}`))return;departments=departments.filter(d=>d.name!==name);saveDepts();renderDepartments();showToast(`${name} deleted`,'success');}
+function deleteDept(name){const members=allMembers.filter(m=>(m.department||'').split(',').map(d=>d.trim()).includes(name));if(!confirm(`Delete "${name}"?${members.length?'\n\n'+members.length+' member(s) will become unassigned.':''}`))return;departments=departments.filter(d=>d.name!==name);saveDepts();renderDepartments();showToast(`${name} deleted`,'success');}
 function viewDeptMembers(name){
   const dept=departments.find(d=>d.name===name);
-  const members=allMembers.filter(m=>m.is_active&&m.department===name).sort((a,b)=>a.full_name.localeCompare(b.full_name));
+  const members=allMembers.filter(m=>m.is_active&&(m.department||'').split(',').map(d=>d.trim()).includes(name)).sort((a,b)=>a.full_name.localeCompare(b.full_name));
   document.getElementById('deptMembersTitle').textContent=`${dept?.icon||'🏛'} ${name}`;
   document.getElementById('deptMembersCount').textContent=`${members.length} active member${members.length!==1?'s':''}`;
   document.getElementById('deptMembersBody').innerHTML=!members.length?'<div class="rc-empty" style="padding:30px">No active members yet.</div>':
@@ -4869,7 +4939,7 @@ function renderBirthdays(){
 
 function initRegistration(){const url=window.location.href.split('?')[0]+'?register=1';const el=document.getElementById('regLinkUrl');if(el)el.textContent=url;loadPendingRegistrations();}
 function copyRegLink(){const url=window.location.href.split('?')[0]+'?register=1';navigator.clipboard.writeText(url).then(()=>showToast('Registration link copied!','success')).catch(()=>showToast('Copy the link manually','info'));}
-function openSelfRegForm(){const cn=appSettings.churchName||'The Precious House';document.getElementById('selfRegChurchName').textContent=cn;document.getElementById('selfRegSuccessChurch').textContent=cn;document.getElementById('selfRegPage').classList.add('open');document.getElementById('selfRegFormBody').style.display='block';document.getElementById('selfRegSuccess').classList.remove('show');}
+function openSelfRegForm(){const cn=appSettings.churchName||'The Precious House';document.getElementById('selfRegChurchName').textContent=cn;document.getElementById('selfRegSuccessChurch').textContent=cn;document.getElementById('selfRegPage').classList.add('open');document.getElementById('selfRegFormBody').style.display='block';document.getElementById('selfRegSuccess').classList.remove('show');populateDeptSelects();}
 function closeSelfRegForm(){document.getElementById('selfRegPage').classList.remove('open');}
 
 
@@ -5329,7 +5399,7 @@ async function submitSelfReg() {
     gender: document.getElementById('sr_gender').value || null,
     marital_status: document.getElementById('sr_marital').value || null,
     address: document.getElementById('sr_address').value.trim() || null,
-    department: document.getElementById('sr_dept').value || null,
+    department: getSrDeptChecked().join(', ')||null,
     how_heard: document.getElementById('sr_source').value || null,
     next_of_kin_name: document.getElementById('sr_kin_name').value.trim() || null,
     next_of_kin_phone: document.getElementById('sr_kin_phone').value.trim() || null,
@@ -6623,15 +6693,10 @@ function openGroupWhatsApp() {
       <div class="self-reg-card">
         <div class="form-section-title" style="font-size:0.95rem">⛪ Church Information</div>
         <div class="form-grid" style="margin-top:12px">
-          <div class="form-group">
+          <div class="form-group full">
             <label class="form-label">Department / Unit</label>
-            <select class="form-select" id="sr_dept">
-              <option value="">Select...</option>
-              <option>Choir</option><option>Ushers</option><option>Media & Tech</option>
-              <option>Children's Church</option><option>Youth</option><option>Women's Fellowship</option>
-              <option>Men's Fellowship</option><option>Protocol</option><option>Prayer Team</option>
-              <option>General Member</option>
-            </select>
+            <div id="sr_dept_checks" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px;border:1.5px solid var(--border);border-radius:8px;min-height:46px"></div>
+            <div style="font-size:0.7rem;color:var(--muted);margin-top:4px">Select all that apply</div>
           </div>
           <div class="form-group"><label class="form-label">How did you hear about us?</label>
             <select class="form-select" id="sr_source"><option value="">Select...</option><option>Friend / Family</option><option>Social Media</option><option>Walk-in</option><option>Online</option><option>Other</option></select>
