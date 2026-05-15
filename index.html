@@ -2629,11 +2629,7 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
                 <input class="search-input" type="text" placeholder="Search member..." id="checkinSearch" oninput="renderCheckinGrid()">
               </div>
             </div>
-            <div class="checkin-grid" id="checkinGrid">
-              <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--warm-gray)">
-                <div class="spinner" style="margin:0 auto 12px"></div>Loading members...
-              </div>
-            </div>
+            <div class="checkin-grid" id="checkinGrid"></div>
           </div>
 
           <!-- Right: live panel -->
@@ -4239,12 +4235,15 @@ let presentSet = new Set();
 let offlineQueue = JSON.parse(localStorage.getItem('tph_offline_queue') || '[]');
 let isOnline = navigator.onLine;
 
-function initCheckin() {
+async function initCheckin() {
   checkinDate = new Date().toISOString().split('T')[0];
   const picker = document.getElementById('checkinDatePicker');
   if (picker) picker.value = checkinDate;
   updateOnlineStatus();
+  if (!allMembers.length) await loadMembers();
   populateMeetingSelect(checkinDate);
+  renderCheckinGrid();
+  renderPanel();
 }
 
 function populateMeetingSelect(dateStr) {
