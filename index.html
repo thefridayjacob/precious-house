@@ -3788,6 +3788,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (scn) scn.textContent = cn;
     if (scs) scs.textContent = cn;
     document.getElementById('selfRegPage').classList.add('open');
+    populateDeptSelects();
     return; // Don't restore session either
   }
 
