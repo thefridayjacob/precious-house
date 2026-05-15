@@ -6254,50 +6254,87 @@ async function openMemberAttendanceProfile() {
 async function renderAttendanceProfile(memberId, containerId) {
   const el = document.getElementById(containerId);
   if (!el) return;
+  if (!memberId) { el.innerHTML = '<div class="rc-empty">No member selected.</div>'; return; }
   el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div class="spinner" style="margin:0 auto 12px"></div>Loading attendance history...</div>';
+
+  // Timeout wrapper — never hang forever
+  const withTimeout = (p, ms=9000) => Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej(new Error('Request timed out after 9s')),ms))]);
 
   try {
     const since = new Date(); since.setMonth(since.getMonth() - 6);
-    const { data } = await db.from('attendance').select('date,session').eq('member_id', memberId).gte('date', since.toISOString().split('T')[0]).order('date');
-    const records = data || [];
+    const sinceStr = since.toISOString().split('T')[0];
 
-    // Build month-by-month breakdown
-    const { data: allRecs } = await db.from('attendance').select('date,session').gte('date', since.toISOString().split('T')[0]).order('date');
-    const allRecords = allRecs || [];
+    // Query 1: member's own records
+    let records = [];
+    try {
+      const { data } = await withTimeout(
+        db.from('attendance').select('date,session').eq('member_id', memberId).gte('date', sinceStr).order('date')
+      );
+      records = data || [];
+    } catch(e) { records = []; }
 
-    // Get all unique dates with attendance
-    const allDates = [...new Set(allRecords.map(r => r.date))].sort();
+    // Query 2: all dates (denominators) — fall back to member's own dates if it fails
+    let allDates = [];
+    try {
+      const { data: allRecs } = await withTimeout(
+        db.from('attendance').select('date').gte('date', sinceStr)
+      );
+      allDates = [...new Set((allRecs||[]).map(r=>r.date))].sort();
+    } catch(e) {
+      allDates = [...new Set(records.map(r=>r.date))].sort();
+    }
+
+    // If member has attended meetings not in allDates (edge case), add them
+    records.forEach(r => { if (!allDates.includes(r.date)) allDates.push(r.date); });
+    allDates.sort();
+
     const myDates = new Set(records.map(r => r.date));
+
+    // Empty state
+    if (!allDates.length) {
+      el.innerHTML = '<div class="rc-empty" style="padding:30px">No attendance records in the last 6 months.</div>';
+      return;
+    }
 
     // Month breakdown (last 6 months)
     const months = [];
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthKey = d.toISOString().slice(0, 7); // YYYY-MM
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
       const monthLabel = d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
       const totalInMonth = allDates.filter(dt => dt.startsWith(monthKey)).length;
       const attendedInMonth = allDates.filter(dt => dt.startsWith(monthKey) && myDates.has(dt)).length;
       months.push({ label: monthLabel, total: totalInMonth, attended: attendedInMonth });
     }
 
-    // Streak calculation
-    const sortedDates = allDates.slice().sort((a,b)=>b.localeCompare(a));
-    let currentStreak = 0, longestStreak = 0, tempStreak = 0;
-    for (const d of sortedDates) {
-      if (myDates.has(d)) { tempStreak++; longestStreak = Math.max(longestStreak, tempStreak); if (currentStreak === tempStreak - 1 || currentStreak === 0 && tempStreak === 1) currentStreak = tempStreak; }
-      else { if (currentStreak === 0) {}; tempStreak = 0; }
+    // Streak calculation (newest first — correctly tracks current and best streak)
+    const sortedDesc = allDates.slice().sort((a,b) => b.localeCompare(a));
+    let currentStreak = 0, longestStreak = 0, tempStreak = 0, currentDone = false;
+    for (const d of sortedDesc) {
+      if (myDates.has(d)) {
+        tempStreak++;
+        longestStreak = Math.max(longestStreak, tempStreak);
+        if (!currentDone) currentStreak = tempStreak;
+      } else {
+        if (!currentDone) currentDone = true;
+        tempStreak = 0;
+      }
     }
 
     const totalAttended = records.length;
     const totalPossible = allDates.length;
     const pct = totalPossible ? Math.round(totalAttended / totalPossible * 100) : 0;
-    const tier = pct >= 80 ? { label: '🌟 Faithful', color: 'var(--green)' } : pct >= 50 ? { label: '✅ Consistent', color: 'var(--navy)' } : pct >= 25 ? { label: '🟡 Irregular', color: '#D97706' } : { label: '🔴 Needs Follow-up', color: 'var(--red)' };
+    const tier = pct >= 80 ? { label: '🌟 Faithful', color: 'var(--green)' }
+      : pct >= 50 ? { label: '✅ Consistent', color: 'var(--navy)' }
+      : pct >= 25 ? { label: '🟡 Irregular', color: '#D97706' }
+      : { label: '🔴 Needs Follow-up', color: 'var(--red)' };
 
-    // AI-suggested pastoral note
+    // Pastoral note
+    const firstName = (allMembers.find(x=>x.id===memberId)||{}).full_name?.split(' ')[0] || '';
     let pastoralNote = '';
-    if (pct < 30 && totalPossible > 4) pastoralNote = `"${(allMembers.find(x=>x.id===memberId)||{}).full_name?.split(' ')[0]} hasn't been around much lately. A personal call or visit would mean a lot right now."`;
-    else if (pct >= 90) pastoralNote = `"Outstanding faithfulness — consider recognising ${(allMembers.find(x=>x.id===memberId)||{}).full_name?.split(' ')[0]} publicly this month."`;
+    if (pct < 30 && totalPossible > 4) pastoralNote = `"${firstName} hasn't been around much lately. A personal call or visit would mean a lot right now."`;
+    else if (pct >= 90) pastoralNote = `"Outstanding faithfulness — consider recognising ${firstName} publicly this month."`;
     else if (pct >= 50 && pct < 70) pastoralNote = `"Attending occasionally — ask if service times work for them or if there's anything the church can do better."`;
 
     // Month bars
@@ -6309,7 +6346,7 @@ async function renderAttendanceProfile(memberId, containerId) {
       return `<div style="margin-bottom:8px">
         <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:3px">
           <span style="color:var(--muted)">${m.label}</span>
-          <span style="font-weight:600;color:${barColor}">${m.attended}/${m.total} (${pctM}%)</span>
+          <span style="font-weight:600;color:${barColor}">${m.total ? m.attended+'/'+m.total+' ('+pctM+'%)' : 'No meetings'}</span>
         </div>
         <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
           <div style="width:${barW}%;height:100%;background:${barColor};border-radius:4px;transition:width 0.4s"></div>
@@ -6317,18 +6354,25 @@ async function renderAttendanceProfile(memberId, containerId) {
       </div>`;
     }).join('');
 
+    // Store all computed data for sharing
+    window._lastAttendanceProfile = {
+      memberId, pct, currentStreak, longestStreak,
+      totalAttended, totalPossible, tier, months,
+      pastoralNote, records, allDates, myDates
+    };
+
     el.innerHTML = `
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">
         <div class="stat-card"><div class="stat-label">Attendance</div><div class="stat-num" style="color:var(--navy)">${pct}%</div></div>
         <div class="stat-card"><div class="stat-label">Current Streak</div><div class="stat-num" style="color:var(--green)">${currentStreak}</div></div>
         <div class="stat-card"><div class="stat-label">Best Streak</div><div class="stat-num">${longestStreak}</div></div>
       </div>
-      <div style="background:${tier.color}15;border:1.5px solid ${tier.color}40;border-radius:8px;padding:8px 12px;margin-bottom:16px;font-weight:600;font-size:0.84rem;color:${tier.color}">${tier.label}</div>
+      <div style="background:${tier.color}15;border:1.5px solid ${tier.color}40;border-radius:8px;padding:8px 12px;margin-bottom:16px;font-weight:600;font-size:0.84rem;color:${tier.color}">${tier.label} · ${totalAttended}/${totalPossible} meetings</div>
       <div style="margin-bottom:16px">
         <div style="font-size:0.72rem;font-weight:600;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px">Last 6 Months</div>
         ${monthBars}
       </div>
-      ${pastoralNote ? `<div style="background:var(--green-faint);border:1.5px solid rgba(13,92,53,0.2);border-radius:10px;padding:12px;font-size:0.82rem;color:var(--green);font-style:italic">💡 Pastoral suggestion: ${pastoralNote}</div>` : ''}
+      ${pastoralNote ? `<div style="background:var(--green-faint);border:1.5px solid rgba(13,92,53,0.2);border-radius:10px;padding:12px;font-size:0.82rem;color:var(--green);font-style:italic">💡 ${pastoralNote}</div>` : ''}
     `;
   } catch(e) {
     el.innerHTML = `<div class="rc-empty">Could not load attendance: ${e.message}</div>`;
@@ -6361,14 +6405,113 @@ async function loadMemberSpotlight(memberId) {
   await renderAttendanceProfile(memberId, 'spotlightProfile');
 }
 
+function detectAttendancePattern(months, allDates, myDates, records, pct, currentStreak, longestStreak) {
+  const now = new Date();
+  const patterns = [];
+  // Trend: compare older 3 months vs recent 3 months
+  const recentMonths = months.slice(-3);
+  const olderMonths = months.slice(0, 3);
+  const avg = arr => { const valid = arr.filter(m => m.total > 0); return valid.length ? valid.reduce((s,m) => s + m.attended/m.total, 0) / valid.length : 0; };
+  const recentAvg = avg(recentMonths);
+  const olderAvg = avg(olderMonths);
+  const trend = recentAvg > olderAvg + 0.15 ? 'improving' : recentAvg < olderAvg - 0.15 ? 'declining' : 'stable';
+  // Sudden drop: good last month, bad this month
+  const lastMonth = months[months.length - 1];
+  const prevMonth = months[months.length - 2];
+  const suddenDrop = !!(prevMonth?.total > 0 && prevMonth.attended / prevMonth.total >= 0.7 && lastMonth?.total > 0 && lastMonth.attended / lastMonth.total < 0.3);
+  // Days since last attendance
+  const sortedMyDates = [...myDates].sort((a,b) => b.localeCompare(a));
+  const lastSeen = sortedMyDates[0] || null;
+  const daysSinceLastSeen = lastSeen ? Math.floor((now - new Date(lastSeen + 'T12:00:00')) / (1000*60*60*24)) : 999;
+  const absenceLength = daysSinceLastSeen < 14 ? 'recent' : daysSinceLastSeen < 30 ? 'two_weeks' : daysSinceLastSeen < 60 ? 'one_month' : daysSinceLastSeen < 90 ? 'two_months' : 'long_term';
+  // Favourite session
+  const sessionCounts = {};
+  records.forEach(r => { sessionCounts[r.session] = (sessionCounts[r.session]||0) + 1; });
+  const favSession = Object.entries(sessionCounts).sort((a,b) => b[1]-a[1])[0]?.[0] || null;
+  // Every-other-week pattern
+  if (myDates.size > 3) {
+    const sorted = [...myDates].sort();
+    const gaps = [];
+    for (let i = 1; i < sorted.length; i++) gaps.push((new Date(sorted[i]) - new Date(sorted[i-1])) / 86400000);
+    const avgGap = gaps.reduce((s,g) => s+g, 0) / gaps.length;
+    if (avgGap >= 12 && avgGap <= 16) patterns.push('every_other_week');
+  }
+  return { trend, suddenDrop, favSession, daysSinceLastSeen, absenceLength, lastSeen, patterns, recentAvg: Math.round(recentAvg*100), olderAvg: Math.round(olderAvg*100) };
+}
+
+function buildFollowUpMessage(firstName, pct, currentStreak, longestStreak, pattern, churchName) {
+  const { trend, suddenDrop, favSession, daysSinceLastSeen, absenceLength, lastSeen, patterns, recentAvg, olderAvg } = pattern;
+  if (pct >= 80 && trend !== 'declining') {
+    if (currentStreak >= 8) return `${firstName}, you have shown up *${currentStreak} meetings in a row* — that kind of faithfulness builds a church. We see you and we are grateful. 🙏`;
+    if (longestStreak >= 10) return `Your best streak of *${longestStreak} consecutive meetings* says everything about your commitment. Thank you for being a pillar of ${churchName}.`;
+    return `You are one of our most faithful members. Your consistency doesn't go unnoticed — it sets the tone for everyone around you. Keep showing up. 🌟`;
+  }
+  if (suddenDrop) return `Hi ${firstName} — we noticed you've been less present recently after a strong run of attendance. We're not checking boxes, we just genuinely miss you and want to make sure you're okay. Is everything alright? We're here if you need anything.`;
+  if (trend === 'declining' && pct >= 40) return `${firstName}, we've noticed your attendance has been gradually decreasing — from around ${olderAvg}% down to ${recentAvg}% recently. We don't want to lose you. Is there something about the services, timing, or anything else we could do better? Your feedback matters to us.`;
+  if (trend === 'improving') return `${firstName}, we have noticed you coming around more often recently — from ${olderAvg}% to ${recentAvg}% in the last few months. That means a lot to us. Keep it up — you are growing and we can see it! 🌱`;
+  if (patterns.includes('every_other_week')) return `${firstName}, we've noticed you tend to attend every other week. We understand life can be busy — if there's a scheduling challenge making it hard to come consistently, we'd love to know. Is there a service time that works better for you?`;
+  if (absenceLength === 'long_term') {
+    const lastSeenStr = lastSeen ? new Date(lastSeen+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long'}) : 'a while ago';
+    return `${firstName}, the last time we saw you was ${lastSeenStr} — about ${Math.round(daysSinceLastSeen/7)} weeks ago. You are missed — not just as a number but as a person. We'd love to see you again. No pressure, just know you are always welcome. 🙏`;
+  }
+  if (absenceLength === 'two_months' || absenceLength === 'one_month') return `${firstName}, we haven't seen you in about ${Math.round(daysSinceLastSeen/7)} weeks. We hope you're well. If life got in the way, we understand — we'd just love to reconnect. Is there anything we can pray with you about?`;
+  if (absenceLength === 'two_weeks') return `${firstName}, we missed you the past couple of weeks. Hope everything is well with you and the family. Looking forward to seeing you this Sunday! 😊`;
+  if (pct >= 25 && pct < 50) {
+    if (favSession) return `${firstName}, we see you most often at *${favSession}* — we love that! We'd love to see you at more of our services too. Is there a particular day or time that works best for you?`;
+    return `${firstName}, we've noticed you come occasionally but haven't found a consistent rhythm yet. We'd love to help with that — is there anything about the services or your schedule we could work around together?`;
+  }
+  if (pct < 25 && pct > 0) return `${firstName}, we are always glad when you walk through the door. We hope ${churchName} feels like a place you can call home. We'd love to see more of you — you belong here.`;
+  return `${firstName}, we miss you at ${churchName}. You are part of this family and we would love to reconnect. Our doors and hearts are always open. 🙏`;
+}
+
 async function shareMemberAttendanceWA() {
   const m = allMembers.find(x => x.id === currentProfileMemberId);
-  if (!m) return;
+  if (!m) { showToast('No member selected', 'error'); return; }
+  const profile = window._lastAttendanceProfile;
+  if (!profile) { showToast('Open the attendance profile first', 'error'); return; }
+
   const church = appSettings.churchName || 'The Precious House';
-  const text = `📊 *${church} — Attendance Report*\n*Member:* ${m.full_name}\n*Dept:* ${m.department||'—'}\n\nThis report was generated by the ${church} Attendance System.\nFor more details, contact your pastor.`;
+  const firstName = m.full_name.split(' ')[0];
+  const { pct, currentStreak, longestStreak, totalAttended, totalPossible, tier, months, records, allDates, myDates } = profile;
+
+  const pattern = detectAttendancePattern(months, allDates, myDates, records, pct, currentStreak, longestStreak);
+  const followUp = buildFollowUpMessage(firstName, pct, currentStreak, longestStreak, pattern, church);
+
+  // Last 3 months summary
+  const recentMonths = months.slice(-3);
+  const monthLines = recentMonths.map(mo => {
+    const mPct = mo.total ? Math.round(mo.attended / mo.total * 100) : 0;
+    const dot = mPct >= 75 ? '🟢' : mPct >= 40 ? '🟡' : mPct > 0 ? '🔴' : '⚫';
+    return `${dot} ${mo.label}: ${mo.attended}/${mo.total} meetings (${mPct}%)`;
+  }).join('\n');
+
+  // Streak line
+  let streakNote = '';
+  if (currentStreak >= 4) streakNote = `🔥 You're on a ${currentStreak}-meeting streak — keep it up!`;
+  else if (longestStreak >= 6) streakNote = `Your best streak was ${longestStreak} consecutive meetings. Let's get back there!`;
+
+  const text = [
+    `📊 *${church} — Your Attendance Summary*`,
+    `Hi ${firstName}! Here's a look at your attendance over the past few months.`,
+    ``,
+    `*Overall:* ${totalAttended}/${totalPossible} meetings (${pct}%) — ${tier.label.replace(/[🌟✅🟡🔴]/g,'').trim()}`,
+    streakNote,
+    ``,
+    `*Recent months:*`,
+    monthLines,
+    ``,
+    followUp,
+    ``,
+    `— ${church} Family 🙏`,
+  ].filter(Boolean).join('\n');
+
   const phone = (m.phone||'').replace(/\D/g,'').replace(/^0/,'234');
-  if (phone) window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
-  else { navigator.clipboard.writeText(text); showToast('Report copied to clipboard', 'success'); }
+  if (phone) {
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+  } else {
+    navigator.clipboard.writeText(text);
+    showToast('Message copied — no phone number on file', 'info');
+  }
 }
 
 async function exportMemberAttendancePDF() {
