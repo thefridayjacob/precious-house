@@ -48,6 +48,11 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Prevent double-tap zoom on all interactive elements */
+button, input, select, textarea, label, a, [role="button"],
+.nav-btn, .btn, .checkin-card, .pin-key, .session-btn, .settings-nav-btn,
+.mbn-btn, .tab-btn, .icon-btn { touch-action: manipulation; }
+
 html { scroll-behavior: smooth; }
 
 body {
@@ -224,8 +229,18 @@ body {
   background: var(--navy3);
   display: flex; flex-direction: column;
   z-index: 50;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, width 0.3s ease;
   border-right: 1px solid rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+
+/* Desktop collapsed state */
+.sidebar.sidebar-collapsed {
+  width: 0 !important;
+  border-right: none !important;
+}
+.sidebar.sidebar-collapsed + .main {
+  margin-left: 0 !important;
 }
 
 .sidebar-brand {
@@ -370,15 +385,29 @@ body {
   margin-left: 240px;
   min-height: 100vh;
   display: flex; flex-direction: column;
+  transition: margin-left 0.3s ease;
 }
 
 .topbar {
   background: white;
   border-bottom: 1px solid var(--border);
-  padding: 16px 32px;
+  padding: 16px 32px 16px 20px;
   display: flex; align-items: center; justify-content: space-between;
   position: sticky; top: 0; z-index: 40;
+  gap: 12px;
 }
+
+.sidebar-toggle-btn {
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; cursor: pointer;
+  color: var(--navy); flex-shrink: 0;
+  transition: all 0.15s;
+}
+.sidebar-toggle-btn:hover { background: var(--cream); border-color: var(--navy); }
 
 .topbar-title {
   font-family: 'Lexend', sans-serif;
@@ -1055,20 +1084,21 @@ video { width: 100%; display: block; }
 /* Member checkin grid */
 .checkin-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+  gap: 12px;
 }
 
 .checkin-card {
   background: white;
   border: 2px solid var(--border);
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 14px;
+  padding: 16px 14px;
   cursor: pointer;
   transition: all 0.15s;
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 12px;
   position: relative;
   overflow: hidden;
+  min-height: 76px;
 }
 .checkin-card:hover { border-color: var(--navy); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(200,146,42,0.15); }
 .checkin-card.present { border-color: var(--green); background: var(--green-faint); }
@@ -1082,27 +1112,27 @@ video { width: 100%; display: block; }
 }
 
 .cc-photo {
-  width: 40px; height: 40px;
+  width: 48px; height: 48px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
   border: 2px solid var(--border);
 }
 .cc-initials {
-  width: 40px; height: 40px;
+  width: 48px; height: 48px;
   border-radius: 50%;
   background: rgba(26,31,94,0.08);
   border: 2px solid var(--border);
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 0.82rem;
+  font-weight: 700; font-size: 0.9rem;
   color: var(--navy);
   flex-shrink: 0;
 }
 .checkin-card.present .cc-initials { background: var(--green-pale); border-color: var(--green); color: var(--green); }
 
 .cc-info { flex: 1; min-width: 0; }
-.cc-name { font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cc-dept { font-size: 0.72rem; color: var(--warm-gray); margin-top: 2px; }
+.cc-name { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; }
+.cc-dept { font-size: 0.74rem; color: var(--warm-gray); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cc-pin { font-size: 0.68rem; color: var(--border2); margin-top: 2px; }
 
 /* Right panel */
@@ -1113,18 +1143,61 @@ video { width: 100%; display: block; }
   overflow: hidden;
   position: sticky;
   top: 80px;
+  transition: all 0.3s ease;
 }
+
+/* Panel collapse toggle button */
+.panel-collapse-btn {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: rgba(255,255,255,0.7);
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.panel-collapse-btn:hover { background: rgba(255,255,255,0.18); color: white; }
+
+/* Collapsed panel state */
+.checkin-shell.panel-hidden { grid-template-columns: 1fr; }
+.checkin-shell.panel-hidden .checkin-panel { display: none; }
+
+/* Floating restore button when panel is hidden */
+.panel-restore-btn {
+  display: none;
+  position: fixed;
+  right: 16px; bottom: 100px;
+  background: var(--navy2);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(26,31,94,0.3);
+  z-index: 90;
+  gap: 6px;
+  align-items: center;
+}
+.panel-restore-btn.visible { display: flex; }
 
 .panel-header {
   background: var(--navy2);
-  padding: 18px 20px;
+  padding: 14px 16px;
   color: white;
+  display: flex; align-items: flex-start; gap: 8px;
 }
+.panel-header-content { flex: 1; min-width: 0; }
 .panel-header h3 {
   font-family: 'Lexend', sans-serif;
-  font-size: 1.1rem;
-  color: var(--navy);
-  margin-bottom: 14px;
+  font-size: 0.95rem;
+  color: white;
+  margin-bottom: 12px;
+  font-weight: 600;
 }
 
 .panel-stats {
@@ -2068,6 +2141,7 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
 @media (max-width: 1024px) {
   .sidebar { width: 210px; }
   .main { margin-left: 210px; }
+  .sidebar.sidebar-collapsed + .main { margin-left: 0; }
   .checkin-shell { grid-template-columns: 1fr; }
   .checkin-panel { position: static; }
   .reports-grid { grid-template-columns: 1fr; }
@@ -2135,13 +2209,13 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
   /* ── ATTENDANCE SCREEN ── */
   .checkin-shell { grid-template-columns: 1fr; gap: 12px; }
   .checkin-panel { position: static; border-radius: 12px; }
-  .checkin-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .checkin-card { padding: 9px 8px; gap: 8px; flex-direction: row; align-items: center; border-radius: 10px; }
-  .cc-photo, .cc-initials { width: 34px; height: 34px; font-size: 0.7rem; flex-shrink: 0; }
+  .checkin-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .checkin-card { padding: 12px 10px; gap: 10px; flex-direction: row; align-items: center; border-radius: 12px; min-height: 68px; }
+  .cc-photo, .cc-initials { width: 40px; height: 40px; font-size: 0.78rem; flex-shrink: 0; }
   .cc-info { min-width: 0; }
-  .cc-name { font-size: 0.75rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cc-dept { font-size: 0.63rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cc-pin { font-size: 0.6rem; }
+  .cc-name { font-size: 0.88rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cc-dept { font-size: 0.68rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cc-pin { font-size: 0.62rem; }
   .panel-header { padding: 12px 14px; }
   .panel-header h3 { font-size: 0.88rem; }
   .panel-stats { grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -2150,6 +2224,7 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
   .panel-body { padding: 10px 14px; }
   .absent-list { max-height: 130px; }
   .export-absent-btn { font-size: 0.8rem; padding: 8px; margin-top: 8px; }
+  .panel-restore-btn { bottom: 70px; }
 
   /* PIN MODAL */
   .pin-modal-body { padding: 18px 16px 22px; }
@@ -2287,8 +2362,8 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
   .stat-num { font-size: 1.4rem; }
   .stat-label { font-size: 0.56rem; }
   .checkin-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
-  .checkin-card { padding: 8px 6px; }
-  .cc-name { font-size: 0.7rem; }
+  .checkin-card { padding: 10px 8px; min-height: 62px; }
+  .cc-name { font-size: 0.82rem; }
   .pin-pad { max-width: 210px; }
   .pin-key { padding: 12px; font-size: 0.98rem; }
   .filter-select { font-size: 0.76rem; padding: 7px 5px; }
@@ -2457,7 +2532,8 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
   <!-- MAIN -->
   <div class="main">
     <div class="topbar">
-      <div>
+      <button class="sidebar-toggle-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
+      <div style="flex:1;min-width:0">
         <div class="topbar-title" id="pageTitle">Members</div>
         <div class="topbar-sub" id="pageSubtitle">All registered members</div>
       </div>
@@ -2633,27 +2709,30 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
           </div>
 
           <!-- Right: live panel -->
-          <div class="checkin-panel">
+          <div class="checkin-panel" id="checkinPanel">
             <div class="panel-header">
-              <h3 id="panelSessionTitle" style="font-size:0.95rem">Select a meeting</h3>
-              <div class="panel-stats">
-                <div class="ps-box"><div class="ps-num green" id="panelPresent">0</div><div class="ps-label">Present</div></div>
-                <div class="ps-box"><div class="ps-num red" id="panelAbsent">0</div><div class="ps-label">Absent</div></div>
+              <div class="panel-header-content">
+                <h3 id="panelSessionTitle">Select a meeting</h3>
+                <div class="panel-stats">
+                  <div class="ps-box"><div class="ps-num green" id="panelPresent">0</div><div class="ps-label">Present</div></div>
+                  <div class="ps-box"><div class="ps-num red" id="panelAbsent">0</div><div class="ps-label">Absent</div></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;padding:0 2px">
+                  <div style="background:rgba(37,99,235,0.15);border-radius:8px;padding:8px 4px;text-align:center">
+                    <div style="font-family:'Lexend',sans-serif;font-size:1.1rem;font-weight:700;color:#60A5FA" id="panelMen">0</div>
+                    <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em">Men</div>
+                  </div>
+                  <div style="background:rgba(147,51,234,0.15);border-radius:8px;padding:8px 4px;text-align:center">
+                    <div style="font-family:'Lexend',sans-serif;font-size:1.1rem;font-weight:700;color:#C084FC" id="panelWomen">0</div>
+                    <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em">Women</div>
+                  </div>
+                  <div style="background:rgba(13,92,53,0.2);border-radius:8px;padding:8px 4px;text-align:center">
+                    <div style="font-family:'Lexend',sans-serif;font-size:1.1rem;font-weight:700;color:#4ADE80" id="panelChildren">0</div>
+                    <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em">Children</div>
+                  </div>
+                </div>
               </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;padding:0 2px">
-                <div style="background:rgba(37,99,235,0.15);border-radius:8px;padding:8px 4px;text-align:center">
-                  <div style="font-family:'Lexend',sans-serif;font-size:1.1rem;font-weight:700;color:#60A5FA" id="panelMen">0</div>
-                  <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em">Men</div>
-                </div>
-                <div style="background:rgba(147,51,234,0.15);border-radius:8px;padding:8px 4px;text-align:center">
-                  <div style="font-family:'Lexend',sans-serif;font-size:1.1rem;font-weight:700;color:#C084FC" id="panelWomen">0</div>
-                  <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em">Women</div>
-                </div>
-                <div style="background:rgba(13,92,53,0.2);border-radius:8px;padding:8px 4px;text-align:center">
-                  <div style="font-family:'Lexend',sans-serif;font-size:1.1rem;font-weight:700;color:#4ADE80" id="panelChildren">0</div>
-                  <div style="font-size:0.58rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em">Children</div>
-                </div>
-              </div>
+              <button class="panel-collapse-btn" onclick="toggleCheckinPanel()" title="Hide stats panel">✕</button>
             </div>
             <div class="panel-body">
               <div class="panel-section-title">Absent this session</div>
@@ -2663,6 +2742,8 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
           </div>
         </div>
       </div><!-- /ci-members -->
+      <!-- Floating panel restore button -->
+      <button class="panel-restore-btn" id="panelRestoreBtn" onclick="toggleCheckinPanel()">📊 Show Stats</button>
 
         <!-- VISITORS TAB -->
         <div id="ci-visitors" style="display:none">
@@ -3661,6 +3742,17 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
 let allMembers = [];
 let filteredMembers = [];
 let currentPage = 1;
+// ── HTML SANITIZER (prevents XSS from user-supplied names/notes) ──
+function escHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 const PER_PAGE = 20;
 let editingId = null;
 let photoDataUrl = null;
@@ -3740,6 +3832,7 @@ async function doLogin() {
   logActivity((currentUser.displayName || currentUser.username) + ' logged in', 'info');
   // Persist session across refreshes
   sessionStorage.setItem('tph_session', JSON.stringify(currentUser));
+  restoreSidebarState();
   await loadAppConfig();
   loadMembers();
 }
@@ -3805,6 +3898,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.title = appSettings.churchName + ' — Attendance';
       }
       applyRoleRestrictions(currentUser.role);
+      restoreSidebarState();
       loadAppConfig().then(() => loadMembers());
     } catch(e) {
       sessionStorage.removeItem('tph_session');
@@ -3829,8 +3923,13 @@ function applyRoleRestrictions(role) {
     showPage('checkin', null); return;
   }
   if (role === 'followup') {
+    // Follow-up team sees: Members, Departments, Birthdays, Registration, Communications, Reports
+    // Hides: Settings, Attendance (check-in data entry)
     document.querySelectorAll('.nav-btn').forEach(b => {
-      if (b.textContent.includes('Settings') || b.textContent.includes('Check-in')) b.style.display = 'none';
+      const onclick = b.getAttribute('onclick') || '';
+      if (onclick.includes("'settings'") || onclick.includes("'checkin'")) {
+        b.style.display = 'none';
+      }
     });
   }
 }
@@ -3881,13 +3980,50 @@ function showPage(name, btn) {
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const backdrop = document.getElementById('sidebarBackdrop');
-  sidebar.classList.toggle('open');
-  if (backdrop) backdrop.classList.toggle('open', sidebar.classList.contains('open'));
+  const toggleBtn = document.getElementById('sidebarToggleBtn');
+  if (window.innerWidth <= 768) {
+    // Mobile: slide in/out with open class
+    sidebar.classList.toggle('open');
+    if (backdrop) backdrop.classList.toggle('open', sidebar.classList.contains('open'));
+  } else {
+    // Desktop: collapse width
+    const isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
+    localStorage.setItem('tph_sidebar_collapsed', isCollapsed ? '1' : '0');
+    if (toggleBtn) toggleBtn.textContent = isCollapsed ? '☰' : '✕';
+  }
 }
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   const backdrop = document.getElementById('sidebarBackdrop');
   if (backdrop) backdrop.classList.remove('open');
+}
+function restoreSidebarState() {
+  if (window.innerWidth > 768) {
+    const collapsed = localStorage.getItem('tph_sidebar_collapsed') === '1';
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('sidebarToggleBtn');
+    if (collapsed && sidebar) {
+      sidebar.classList.add('sidebar-collapsed');
+      if (toggleBtn) toggleBtn.textContent = '☰';
+    }
+  }
+}
+function toggleCheckinPanel() {
+  const shell = document.querySelector('.checkin-shell');
+  const restoreBtn = document.getElementById('panelRestoreBtn');
+  if (!shell) return;
+  const hidden = shell.classList.toggle('panel-hidden');
+  if (restoreBtn) restoreBtn.classList.toggle('visible', hidden);
+  localStorage.setItem('tph_panel_hidden', hidden ? '1' : '0');
+}
+function restorePanelState() {
+  const hidden = localStorage.getItem('tph_panel_hidden') === '1';
+  if (hidden) {
+    const shell = document.querySelector('.checkin-shell');
+    const restoreBtn = document.getElementById('panelRestoreBtn');
+    if (shell) shell.classList.add('panel-hidden');
+    if (restoreBtn) restoreBtn.classList.add('visible');
+  }
 }
 
 // ── LOAD MEMBERS ──
@@ -4022,7 +4158,7 @@ function renderMemberTable() {
         ? new Date(m.date_joined + 'T12:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
         : '—';
       return `<tr onclick="viewProfile('${m.id}')">
-        <td><div class="member-cell">${photo}<div><div class="member-name-cell">${m.full_name}</div>${m.email ? `<div class="member-id-cell">${m.email}</div>` : ''}</div></div></td>
+        <td><div class="member-cell">${photo}<div><div class="member-name-cell">${escHtml(m.full_name)}</div>${m.email ? `<div class="member-id-cell">${escHtml(m.email)}</div>` : ''}</div></div></td>
         <td><span style="font-family:monospace;font-size:0.8rem;color:var(--warm-gray)">${m.member_id}</span></td>
         <td>${m.phone || '—'}</td>
         <td>${m.department ? `<span class="dept-badge">${m.department}</span>` : '—'}</td>
@@ -4030,7 +4166,7 @@ function renderMemberTable() {
         <td><span class="status-dot ${m.is_active ? '' : 'inactive'}">${m.is_active ? 'Active' : 'Inactive'}</span></td>
         <td onclick="event.stopPropagation()"><div class="row-actions">
           <button class="icon-btn" onclick="openEditModal('${m.id}')">✏️</button>
-          <button class="icon-btn del" onclick="deleteMember('${m.id}','${(m.full_name || '').replace(/'/g, "\'")}',event)">🗑</button>
+          <button class="icon-btn del" onclick="deleteMember('${m.id}',null,event)">🗑</button>
         </div></td>
       </tr>`;
     }).join('');
@@ -4146,14 +4282,14 @@ function viewProfile(id) {
   const initials=m.full_name?.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
   const photo=m.photo_url?`<img class="profile-photo" src="${m.photo_url}">`:`<div class="profile-initials-lg">${initials}</div>`;
   const joined=m.date_joined?new Date(m.date_joined+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):'—';
-  const field=(label,value)=>value?`<div class="profile-field"><div class="profile-field-label">${label}</div><div class="profile-field-value">${value}</div></div>`:'';
+  const field=(label,value)=>value?`<div class="profile-field"><div class="profile-field-label">${escHtml(label)}</div><div class="profile-field-value">${escHtml(value)}</div></div>`:'';
   document.getElementById('profileContent').innerHTML=`
     <div class="profile-header">${photo}
-      <div class="profile-meta"><h2>${m.full_name}</h2>
+      <div class="profile-meta"><h2>${escHtml(m.full_name)}</h2>
         <div class="profile-tags">
-          ${m.department?`<span class="dept-badge">${m.department}</span>`:''}
-          ${m.member_type?`<span class="dept-badge" style="background:var(--navy);color:white;border-color:transparent">${m.member_type}</span>`:''}
-          ${m.member_category?`<span class="dept-badge" style="background:var(--gold-pale);color:var(--navy)">${m.member_category}</span>`:''}
+          ${m.department?`<span class="dept-badge">${escHtml(m.department)}</span>`:''}
+          ${m.member_type?`<span class="dept-badge" style="background:var(--navy);color:white;border-color:transparent">${escHtml(m.member_type)}</span>`:''}
+          ${m.member_category?`<span class="dept-badge" style="background:var(--gold-pale);color:var(--navy)">${escHtml(m.member_category)}</span>`:''}
           <span class="status-dot ${m.is_active?'':'inactive'}" style="font-size:0.8rem">${m.is_active?'Active':'Inactive'}</span>
         </div>
         <div class="profile-id-label">ID: <strong style="font-family:monospace;color:var(--navy)">${m.member_id}</strong></div>
@@ -4169,8 +4305,10 @@ function viewProfile(id) {
   openModal('profileModal');
 }
 
-async function deleteMember(id,name,evt) {
+async function deleteMember(id,_ignoredName,evt) {
   if(evt){evt.stopPropagation();evt.preventDefault();}
+  const member = allMembers.find(x => x.id === id);
+  const name = member ? member.full_name : 'this member';
   // Defer confirm to next frame so browser can paint first (fixes INP)
   await new Promise(r => setTimeout(r, 0));
   if(!confirm(`Remove ${name}?\nThis cannot be undone.`)) return;
@@ -4244,6 +4382,7 @@ async function initCheckin() {
   populateMeetingSelect(checkinDate);
   renderCheckinGrid();
   renderPanel();
+  restorePanelState();
 }
 
 function populateMeetingSelect(dateStr) {
@@ -4333,7 +4472,7 @@ function renderCheckinGrid() {
     const isChild = isChildMember(m);
     const pinStatus = present ? '✅ Present' : isChild ? '👆 Tap to mark' : m.pin_hash ? '🔐 PIN set' : '⚠ No PIN';
     const clickFn = isChild ? `markChildPresent('${m.id}')` : `openPinModal('${m.id}')`;
-    return `<div class="checkin-card ${present?'present':''}" onclick="${clickFn}">${photo}<div class="cc-info"><div class="cc-name">${m.full_name}</div><div class="cc-dept">${m.department||'No dept'}</div><div class="cc-pin">${pinStatus}</div></div></div>`;
+    return `<div class="checkin-card ${present?'present':''}" onclick="${clickFn}">${photo}<div class="cc-info"><div class="cc-name">${escHtml(m.full_name)}</div><div class="cc-dept">${escHtml(m.department||'No dept')}</div><div class="cc-pin">${pinStatus}</div></div></div>`;
   }).join('');
 }
 
@@ -4412,7 +4551,7 @@ function openPinModal(memberId){
   pinModalMemberId=memberId;pinValue='';
   const initials=m.full_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
   const photo=m.photo_url?`<img class="pin-photo" src="${m.photo_url}">`:`<div class="pin-initials">${initials}</div>`;
-  document.getElementById('pinMemberInfo').innerHTML=`${photo}<div class="pin-member-name">${m.full_name}</div><div class="pin-member-dept">${m.department||''}</div>`;
+  document.getElementById('pinMemberInfo').innerHTML=`${photo}<div class="pin-member-name">${escHtml(m.full_name)}</div><div class="pin-member-dept">${escHtml(m.department||'')}</div>`;
   const alreadyIn=presentSet.has(memberId);
   document.getElementById('pinAlreadyIn').style.display=alreadyIn?'block':'none';
   document.getElementById('pinEntryArea').style.display=alreadyIn?'none':'block';
@@ -4577,7 +4716,7 @@ function renderConsistencyTable(){
   const filtered=memberStats.filter(m=>(!q||m.full_name.toLowerCase().includes(q))&&(!dept||(m.department||'').split(',').map(d=>d.trim()).includes(dept)));
   const tbody=document.getElementById('consistencyTbody');if(!tbody)return;
   if(!filtered.length){tbody.innerHTML='<tr><td colspan="8"><div class="rc-empty">No members match.</div></td></tr>';return;}
-  tbody.innerHTML=filtered.map((m,i)=>{const initials=m.full_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);const photo=m.photo_url?`<img class="member-photo" src="${m.photo_url}" style="width:28px;height:28px">`:`<div class="member-initials" style="width:28px;height:28px;font-size:0.65rem">${initials}</div>`;const bc=m.pct>=75?'high':m.pct>=40?'mid':'low';const ls=m.lastSeen?new Date(m.lastSeen+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';const dots=m.last6.map(s=>`<div class="h-dot ${s}"></div>`).join('');return`<tr><td style="color:var(--warm-gray);font-size:0.8rem">${i+1}</td><td><div class="member-cell">${photo}<div><div class="member-name-cell">${m.full_name}</div></div></div></td><td>${m.department?`<span class="dept-badge">${m.department}</span>`:'—'}</td><td style="font-weight:600">${m.attended}</td><td style="color:var(--warm-gray)">${m.total}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="cr-bar-wrap" style="width:60px"><div class="cr-bar ${bc}" style="width:${m.pct}%"></div></div><span class="cr-pct ${bc}" style="font-size:0.82rem">${m.pct}%</span></div></td><td><div class="history-dots">${dots}</div></td><td style="font-size:0.78rem;color:var(--warm-gray)">${ls}</td></tr>`;}).join('');
+  tbody.innerHTML=filtered.map((m,i)=>{const initials=m.full_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);const photo=m.photo_url?`<img class="member-photo" src="${m.photo_url}" style="width:28px;height:28px">`:`<div class="member-initials" style="width:28px;height:28px;font-size:0.65rem">${initials}</div>`;const bc=m.pct>=75?'high':m.pct>=40?'mid':'low';const ls=m.lastSeen?new Date(m.lastSeen+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';const dots=m.last6.map(s=>`<div class="h-dot ${s}"></div>`).join('');return`<tr><td style="color:var(--warm-gray);font-size:0.8rem">${i+1}</td><td><div class="member-cell">${photo}<div><div class="member-name-cell">${escHtml(m.full_name)}</div></div></div></td><td>${m.department?`<span class="dept-badge">${escHtml(m.department)}</span>`:'—'}</td><td style="font-weight:600">${m.attended}</td><td style="color:var(--warm-gray)">${m.total}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="cr-bar-wrap" style="width:60px"><div class="cr-bar ${bc}" style="width:${m.pct}%"></div></div><span class="cr-pct ${bc}" style="font-size:0.82rem">${m.pct}%</span></div></td><td><div class="history-dots">${dots}</div></td><td style="font-size:0.78rem;color:var(--warm-gray)">${ls}</td></tr>`;}).join('');
 }
 
 
@@ -7110,6 +7249,10 @@ function openGroupWhatsApp() {
       <button class="modal-close" onclick="closeModal('groupDetailModal')">✕</button>
     </div>
     <div class="modal-body" id="groupDetailContent"></div>
+    <div style="padding:0 20px 12px">
+      <label class="form-label" style="margin-bottom:5px">Custom WhatsApp message <span style="font-weight:400;color:var(--muted)">(optional — use {name} for first name)</span></label>
+      <textarea id="grp_message_text" class="form-input" rows="2" style="resize:vertical;font-size:0.84rem" placeholder="Hi {name}! Quick update from our group…"></textarea>
+    </div>
     <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
       <button class="btn btn-ghost" onclick="closeModal('groupDetailModal')">Close</button>
       <button class="btn btn-ghost" onclick="openEditGroupModal()">✏️ Edit</button>
