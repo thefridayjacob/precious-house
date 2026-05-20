@@ -1029,7 +1029,7 @@ video { width: 100%; display: block; }
 /* ── CHECK-IN PAGE ── */
 .checkin-shell {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr;
   gap: 24px;
   align-items: start;
 }
@@ -1093,13 +1093,13 @@ video { width: 100%; display: block; }
   background: white;
   border: 2px solid var(--border);
   border-radius: 16px;
-  padding: 20px 18px;
+  padding: 22px 20px;
   cursor: pointer;
   transition: all 0.15s;
-  display: flex; align-items: center; gap: 16px;
+  display: flex; align-items: center; gap: 18px;
   position: relative;
   overflow: hidden;
-  min-height: 92px;
+  min-height: 100px;
 }
 .checkin-card:hover { border-color: var(--navy); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(26,31,94,0.12); }
 .checkin-card.present { border-color: var(--green); background: var(--green-faint); }
@@ -1113,37 +1113,36 @@ video { width: 100%; display: block; }
 }
 
 .cc-photo {
-  width: 56px; height: 56px;
+  width: 62px; height: 62px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
   border: 2px solid var(--border);
 }
 .cc-initials {
-  width: 56px; height: 56px;
+  width: 62px; height: 62px;
   border-radius: 50%;
   background: rgba(26,31,94,0.08);
   border: 2px solid var(--border);
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 1rem;
+  font-weight: 700; font-size: 1.05rem;
   color: var(--navy);
   flex-shrink: 0;
 }
 .checkin-card.present .cc-initials { background: var(--green-pale); border-color: var(--green); color: var(--green); }
 
 .cc-info { flex: 1; min-width: 0; }
-.cc-name { font-weight: 700; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
-.cc-dept { font-size: 0.78rem; color: var(--warm-gray); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cc-pin { font-size: 0.7rem; color: var(--border2); margin-top: 3px; }
+.cc-name { font-weight: 700; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+.cc-dept { font-size: 0.82rem; color: var(--warm-gray); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-pin { font-size: 0.72rem; color: var(--border2); margin-top: 3px; }
 
-/* Right panel */
+/* Right panel — now flows below the grid (full width) */
 .checkin-panel {
   background: white;
   border-radius: var(--r-lg);
   border: 1.5px solid var(--border);
   overflow: hidden;
-  position: sticky;
-  top: 80px;
+  position: static;
   transition: all 0.3s ease;
 }
 
@@ -1378,8 +1377,7 @@ video { width: 100%; display: block; }
 }
 
 @media (max-width: 900px) {
-  .checkin-shell { grid-template-columns: 1fr; }
-  .checkin-panel { position: static; }
+  /* checkin-shell already 1fr at base */
 }
 
 
@@ -2143,9 +2141,8 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
   .sidebar { width: 210px; }
   .main { margin-left: 210px; }
   .sidebar.sidebar-collapsed + .main { margin-left: 0; }
-  .checkin-shell { grid-template-columns: 1fr; }
-  .checkin-panel { position: static; }
-  /* Tablet portrait: 2 columns — panel is now stacked so full width available */
+  /* checkin-shell already 1fr at base */
+  /* Tablet portrait: 2 columns */
   .checkin-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .checkin-card { padding: 18px 16px; min-height: 86px; }
   .reports-grid { grid-template-columns: 1fr; }
@@ -2213,8 +2210,8 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
   .photo-btns { flex-direction: row; gap: 8px; }
 
   /* ── ATTENDANCE SCREEN ── */
-  .checkin-shell { grid-template-columns: 1fr; gap: 12px; }
-  .checkin-panel { position: static; border-radius: 12px; }
+  .checkin-shell { gap: 12px; }
+  .checkin-panel { border-radius: 12px; }
   /* Mobile: 1 column — full-width cards for easy tapping */
   .checkin-grid { grid-template-columns: 1fr; gap: 10px; }
   .checkin-card { padding: 16px 14px; gap: 14px; border-radius: 14px; min-height: 80px; }
@@ -4486,7 +4483,7 @@ function renderCheckinGrid() {
   if(!filtered.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--warm-gray)">No active members.</div>';return;}
   grid.innerHTML=filtered.map(m=>{
     const present=presentSet.has(m.id);
-    const initials=m.full_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const initials=(m.full_name||'?').split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
     const photo=m.photo_url?`<img class="cc-photo" src="${m.photo_url}" onerror="this.outerHTML='<div class=\\'cc-initials\\'>${initials}</div>'">`:`<div class="cc-initials">${initials}</div>`;
     const isChild = isChildMember(m);
     const pinStatus = present ? '✅ Present' : isChild ? '👆 Tap to mark' : m.pin_hash ? '🔐 PIN set' : '⚠ No PIN';
@@ -4508,7 +4505,7 @@ function renderPanel() {
   const pw=document.getElementById('panelWomen'); if(pw)pw.textContent=women;
   const pc=document.getElementById('panelChildren'); if(pc)pc.textContent=children;
   const list=document.getElementById('absentList'); if(!list)return;
-  list.innerHTML=absentMembers.length===0?'<p style="font-size:0.82rem;color:var(--warm-gray);text-align:center;padding:12px">Everyone is present! 🎉</p>':absentMembers.map(m=>`<div class="absent-row"><div class="absent-name">${m.full_name}</div><div class="absent-phone">${m.phone||''}</div></div>`).join('');
+  list.innerHTML=absentMembers.length===0?'<p style="font-size:0.82rem;color:var(--warm-gray);text-align:center;padding:12px">Everyone is present! 🎉</p>':absentMembers.map(m=>`<div class="absent-row"><div class="absent-name">${escHtml(m.full_name)}</div><div class="absent-phone">${escHtml(m.phone||'')}</div></div>`).join('');
 }
 
 
@@ -4697,7 +4694,7 @@ function renderFollowupList(){
   const el=document.getElementById('followupList');if(!el)return;
   const nf=memberStats.filter(m=>m.streak>=2).sort((a,b)=>b.streak-a.streak);
   if(!nf.length){el.innerHTML='<div class="rc-empty">🎉 No one needs follow-up right now!</div>';return;}
-  el.innerHTML=nf.map(m=>{const i=m.full_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);const ls=m.lastSeen?new Date(m.lastSeen+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'Never';return`<div class="followup-row"><div class="followup-avatar">${i}</div><div class="followup-info"><div class="followup-name">${m.full_name}</div><div class="followup-detail">${m.department||'No dept'} · ${m.phone||'No phone'} · Last seen: ${ls}</div></div><span class="followup-streak">${m.streak} meetings missed</span></div>`;}).join('');
+  el.innerHTML=nf.map(m=>{const i=(m.full_name||'?').split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';const ls=m.lastSeen?new Date(m.lastSeen+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'Never';return`<div class="followup-row"><div class="followup-avatar">${i}</div><div class="followup-info"><div class="followup-name">${escHtml(m.full_name)}</div><div class="followup-detail">${escHtml(m.department||'No dept')} · ${escHtml(m.phone||'No phone')} · Last seen: ${ls}</div></div><span class="followup-streak">${m.streak} meetings missed</span></div>`;}).join('');
 }
 
 
@@ -4706,7 +4703,7 @@ function renderLeaderboard(){
   const el=document.getElementById('leaderboardList');if(!el)return;
   const qualified=memberStats.filter(m=>m.total>0),shown=leaderboardShowAll?qualified:qualified.slice(0,10);
   if(!qualified.length){el.innerHTML='<div class="rc-empty">No attendance data yet.</div>';return;}
-  el.innerHTML=shown.map((m,i)=>{const initials=m.full_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);const photo=m.photo_url?`<img class="cr-photo" src="${m.photo_url}">`:`<div class="cr-initials">${initials}</div>`;const rl=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);const bc=m.pct>=75?'high':m.pct>=40?'mid':'low';return`<div class="consistency-row"><div class="cr-rank">${rl}</div>${photo}<div class="cr-info"><div class="cr-name">${m.full_name}</div><div class="cr-dept">${m.department||'No dept'} · ${m.attended}/${m.total}</div></div><div class="cr-bar-wrap"><div class="cr-bar ${bc}" style="width:${m.pct}%"></div></div><div class="cr-pct ${bc}">${m.pct}%</div></div>`;}).join('');
+  el.innerHTML=shown.map((m,i)=>{const initials=(m.full_name||'?').split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';const photo=m.photo_url?`<img class="cr-photo" src="${m.photo_url}">`:`<div class="cr-initials">${initials}</div>`;const rl=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);const bc=m.pct>=75?'high':m.pct>=40?'mid':'low';return`<div class="consistency-row"><div class="cr-rank">${rl}</div>${photo}<div class="cr-info"><div class="cr-name">${escHtml(m.full_name)}</div><div class="cr-dept">${escHtml(m.department||'No dept')} · ${m.attended}/${m.total}</div></div><div class="cr-bar-wrap"><div class="cr-bar ${bc}" style="width:${m.pct}%"></div></div><div class="cr-pct ${bc}">${m.pct}%</div></div>`;}).join('');
 }
 function toggleLeaderboardFull(){leaderboardShowAll=!leaderboardShowAll;document.querySelector('#leaderboardList').closest('.report-card').querySelector('.rc-action').textContent=leaderboardShowAll?'Show less':'See all';renderLeaderboard();}
 
@@ -4945,7 +4942,7 @@ function renderDepartments(){
   if(!filtered.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--warm-gray)">No departments. Click <strong>+ New Department</strong>.</div>';return;}
   grid.innerHTML=filtered.map(dept=>{
     const members=mdm[dept.name]||[];
-    const avatars=members.slice(0,4).map(m=>{const i=m.full_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);return`<div class="dept-avatar-sm">${m.photo_url?`<img src="${m.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:i}</div>`;}).join('');
+    const avatars=members.slice(0,4).map(m=>{const i=(m.full_name||'?').split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';return`<div class="dept-avatar-sm">${m.photo_url?`<img src="${m.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:i}</div>`;}).join('');
     const extra=members.length>4?`<div class="dept-avatar-sm">+${members.length-4}</div>`:'';
     return`<div class="dept-card" onclick="viewDeptMembers('${dept.name}')"><div class="dept-card-top"><div class="dept-icon">${dept.icon||'🏛'}</div><div class="dept-card-actions"><button class="icon-btn" onclick="event.stopPropagation();openEditDept('${dept.name}')">✏️</button><button class="icon-btn del" onclick="event.stopPropagation();deleteDept('${dept.name}')">🗑</button></div></div><div class="dept-card-name">${dept.name}</div><div class="dept-card-desc">${dept.desc||'No description'}</div><div class="dept-card-footer"><div class="dept-member-stack">${avatars}${extra}</div><div class="dept-member-count">${members.length} member${members.length!==1?'s':''}</div>${dept.lead?`<div class="dept-lead">Lead<span>${dept.lead}</span></div>`:''}</div></div>`;
   }).join('');
@@ -5090,7 +5087,7 @@ function renderBirthdays(){
   const el=document.getElementById('birthdayContent');if(!el)return;
   if(!enriched.length){el.innerHTML=`<div style="text-align:center;padding:60px;color:var(--warm-gray)"><div style="font-size:2.5rem;margin-bottom:12px">🎂</div><p>No birthdays in the next ${rangeDays} days.</p>${noDob>0?`<p style="margin-top:8px;font-size:0.82rem">${noDob} members have no date of birth recorded.</p>`:''}</div>`;return;}
   const groups=[{label:'🎂 Today',members:enriched.filter(m=>m.daysUntil===0),cls:'today'},{label:'🎁 This Week',members:enriched.filter(m=>m.daysUntil>0&&m.daysUntil<=7),cls:'this-week'},{label:'📅 Upcoming',members:enriched.filter(m=>m.daysUntil>7),cls:'upcoming'}].filter(g=>g.members.length>0);
-  el.innerHTML=groups.map(g=>`<div class="birthday-section"><div class="birthday-header">${g.label} <span style="font-size:0.78rem;color:var(--warm-gray);font-family:'Lexend Deca',sans-serif;font-weight:400">(${g.members.length})</span></div>${g.members.map(m=>{const i=m.full_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);const photo=m.photo_url?`<img class="bday-photo" src="${m.photo_url}">`:`<div class="bday-initials">${i}</div>`;const bdg=m.daysUntil===0?`<span class="bday-badge today">🎂 Today!</span>`:m.daysUntil<=7?`<span class="bday-badge this-week">In ${m.daysUntil} day${m.daysUntil!==1?'s':''}</span>`:`<span class="bday-badge upcoming">In ${m.daysUntil} days</span>`;const phone234=(m.phone||'').replace(/\D/g,'').replace(/^0/,'234');const waMsg=encodeURIComponent(`Happy Birthday ${m.full_name.split(' ')[0]}! 🎂🎉 Wishing you a blessed birthday from ${appSettings.churchName||'The Precious House'} family! 🙏`);const wa=m.phone?`<a class="whatsapp-btn" href="https://wa.me/${phone234}?text=${waMsg}" target="_blank">💬 WhatsApp</a>`:'';return`<div class="birthday-row ${g.cls}">${photo}<div class="bday-info"><div class="bday-name">${m.full_name}</div><div class="bday-detail">${m.dobFormatted} · Turning ${m.age} · ${m.department||'No dept'} · ${m.phone||'No phone'}</div></div>${bdg} ${wa}</div>`;}).join('')}</div>`).join('');
+  el.innerHTML=groups.map(g=>`<div class="birthday-section"><div class="birthday-header">${g.label} <span style="font-size:0.78rem;color:var(--warm-gray);font-family:'Lexend Deca',sans-serif;font-weight:400">(${g.members.length})</span></div>${g.members.map(m=>{const i=(m.full_name||'?').split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';const photo=m.photo_url?`<img class="bday-photo" src="${m.photo_url}">`:`<div class="bday-initials">${i}</div>`;const bdg=m.daysUntil===0?`<span class="bday-badge today">🎂 Today!</span>`:m.daysUntil<=7?`<span class="bday-badge this-week">In ${m.daysUntil} day${m.daysUntil!==1?'s':''}</span>`:`<span class="bday-badge upcoming">In ${m.daysUntil} days</span>`;const phone234=(m.phone||'').replace(/\D/g,'').replace(/^0/,'234');const firstName=(m.full_name||'').split(' ').filter(Boolean)[0]||m.full_name||'Friend';const waMsg=encodeURIComponent(`Happy Birthday ${firstName}! 🎂🎉 Wishing you a blessed birthday from ${appSettings.churchName||'The Precious House'} family! 🙏`);const wa=m.phone?`<a class="whatsapp-btn" href="https://wa.me/${phone234}?text=${waMsg}" target="_blank">💬 WhatsApp</a>`:'';return`<div class="birthday-row ${g.cls}">${photo}<div class="bday-info"><div class="bday-name">${escHtml(m.full_name)}</div><div class="bday-detail">${escHtml(m.dobFormatted)} · Turning ${m.age} · ${escHtml(m.department||'No dept')} · ${escHtml(m.phone||'No phone')}</div></div>${bdg} ${wa}</div>`;}).join('')}</div>`).join('');
 }
 
 
@@ -5140,7 +5137,7 @@ function loadBulkRecipients(){
   const members=allMembers.filter(m=>m.is_active&&(!dept||(m.department||'').split(',').map(d=>d.trim()).includes(dept)));
   if(!members.length){el.innerHTML='<div style="color:var(--warm-gray);font-size:0.82rem;text-align:center;padding:16px">No active members</div>';updateBulkCount();return;}
   members.forEach(m=>{if(m.phone)bulkSelectedMembers.add(m.id);});
-  el.innerHTML=members.map(m=>{const checked=bulkSelectedMembers.has(m.id);return`<div class="recipient-row"><div class="recipient-check ${checked?'checked':''}" onclick="${m.phone?`toggleBulkMember('${m.id}',this)`:''}" style="${!m.phone?'opacity:0.35;cursor:not-allowed':''}">${checked?'✓':''}</div><div class="recipient-name">${m.full_name}</div><div class="recipient-phone">${m.phone||'⚠ No phone'}</div></div>`;}).join('');
+  el.innerHTML=members.map(m=>{const checked=bulkSelectedMembers.has(m.id);return`<div class="recipient-row"><div class="recipient-check ${checked?'checked':''}" onclick="${m.phone?`toggleBulkMember('${m.id}',this)`:''}" style="${!m.phone?'opacity:0.35;cursor:not-allowed':''}">${checked?'✓':''}</div><div class="recipient-name">${escHtml(m.full_name)}</div><div class="recipient-phone">${escHtml(m.phone||'⚠ No phone')}</div></div>`;}).join('');
   updateBulkCount();
 }
 function toggleBulkMember(id,el){if(bulkSelectedMembers.has(id)){bulkSelectedMembers.delete(id);el.classList.remove('checked');el.textContent='';}else{bulkSelectedMembers.add(id);el.classList.add('checked');el.textContent='✓';}updateBulkCount();}
@@ -6273,12 +6270,12 @@ function renderVisitorsList() {
     const badge = visits >= 3
       ? `<span style="background:var(--green);color:white;border-radius:12px;padding:2px 8px;font-size:0.7rem;font-weight:700">⭐ ${visits} visits — invite!</span>`
       : `<span style="background:rgba(26,31,94,0.08);color:var(--navy);border-radius:12px;padding:2px 8px;font-size:0.7rem">${visits} visit${visits!==1?'s':''}</span>`;
-    const initials = (v.full_name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const initials = (v.full_name||'?').split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
     return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="viewVisitorProfile('${v.id}')">
       <div style="width:38px;height:38px;border-radius:50%;background:rgba(26,31,94,0.1);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.78rem;color:var(--navy);flex-shrink:0">${initials}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:0.88rem">${v.full_name}</div>
-        <div style="font-size:0.72rem;color:var(--muted)">${v.phone||'No phone'}${v.referrer_name?' · Ref: '+v.referrer_name:''}</div>
+        <div style="font-weight:600;font-size:0.88rem">${escHtml(v.full_name||'')}</div>
+        <div style="font-size:0.72rem;color:var(--muted)">${escHtml(v.phone||'No phone')}${v.referrer_name?' · Ref: '+escHtml(v.referrer_name):''}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
         ${badge}
@@ -6293,21 +6290,20 @@ function viewVisitorProfile(id) {
   const v = currentVisitors.find(x => x.id === id);
   if (!v) return;
   const visits = v.visit_count || 1;
-  document.getElementById('groupDetailName') && null; // not using this modal
   document.getElementById('visitorProfileContent').innerHTML = `
     <div style="margin-bottom:16px">
-      <div style="font-family:'Lexend',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy)">${v.full_name}</div>
-      <div style="font-size:0.78rem;color:var(--muted);margin-top:4px">${v.gender||''} ${v.phone?'· '+v.phone:''}</div>
+      <div style="font-family:'Lexend',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy)">${escHtml(v.full_name||'')}</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-top:4px">${escHtml(v.gender||'')} ${v.phone?'· '+escHtml(v.phone):''}</div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
       <div class="stat-card"><div class="stat-label">Total Visits</div><div class="stat-num" style="color:var(--navy)">${visits}</div></div>
-      <div class="stat-card"><div class="stat-label">Last Session</div><div class="stat-num" style="font-size:0.9rem;color:var(--muted)">${v.last_session||'—'}</div></div>
+      <div class="stat-card"><div class="stat-label">Last Session</div><div class="stat-num" style="font-size:0.9rem;color:var(--muted)">${escHtml(v.last_session||'—')}</div></div>
     </div>
-    ${v.address?`<div style="margin-bottom:8px"><span style="font-size:0.72rem;color:var(--muted);font-weight:600">ADDRESS</span><div style="font-size:0.84rem">${v.address}</div></div>`:''}
-    ${v.referrer_name?`<div style="margin-bottom:8px"><span style="font-size:0.72rem;color:var(--muted);font-weight:600">REFERRED BY</span><div style="font-size:0.84rem">${v.referrer_name}</div></div>`:''}
-    ${v.notes?`<div style="margin-bottom:8px"><span style="font-size:0.72rem;color:var(--muted);font-weight:600">NOTES</span><div style="font-size:0.84rem">${v.notes}</div></div>`:''}
+    ${v.address?`<div style="margin-bottom:8px"><span style="font-size:0.72rem;color:var(--muted);font-weight:600">ADDRESS</span><div style="font-size:0.84rem">${escHtml(v.address)}</div></div>`:''}
+    ${v.referrer_name?`<div style="margin-bottom:8px"><span style="font-size:0.72rem;color:var(--muted);font-weight:600">REFERRED BY</span><div style="font-size:0.84rem">${escHtml(v.referrer_name)}</div></div>`:''}
+    ${v.notes?`<div style="margin-bottom:8px"><span style="font-size:0.72rem;color:var(--muted);font-weight:600">NOTES</span><div style="font-size:0.84rem">${escHtml(v.notes)}</div></div>`:''}
     ${visits >= 3 ? `<div style="background:var(--green-faint);border:1.5px solid rgba(13,92,53,0.2);border-radius:10px;padding:12px;margin-top:12px;font-size:0.84rem;color:var(--green)">⭐ <strong>This visitor has attended ${visits} times.</strong> They may be ready to become a member!</div>` : ''}
-    ${v.is_prospect ? `<div style="background:rgba(13,92,53,0.06);border:1.5px solid rgba(13,92,53,0.25);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:0.83rem;color:var(--green)">🌿 <strong>Marked as Prospect</strong>${v.prospect_notes ? ' — ' + v.prospect_notes : ''}</div>` : ''}
+    ${v.is_prospect ? `<div style="background:rgba(13,92,53,0.06);border:1.5px solid rgba(13,92,53,0.25);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:0.83rem;color:var(--green)">🌿 <strong>Marked as Prospect</strong>${v.prospect_notes ? ' — ' + escHtml(v.prospect_notes) : ''}</div>` : ''}
   `;
   const prospectBtn = document.getElementById('visitorProspectBtn');
   if (prospectBtn) {
@@ -6568,7 +6564,7 @@ async function loadMemberSpotlight(memberId) {
   if (!m) return;
   const profileEl = document.getElementById('spotlightProfile');
   const resultsEl = document.getElementById('spotlightResults');
-  if (resultsEl) resultsEl.innerHTML = `<div style="padding:8px 10px;background:rgba(26,31,94,0.06);border-radius:8px;font-weight:500;font-size:0.86rem;margin-bottom:8px">📊 ${m.full_name}</div>`;
+  if (resultsEl) resultsEl.innerHTML = `<div style="padding:8px 10px;background:rgba(26,31,94,0.06);border-radius:8px;font-weight:500;font-size:0.86rem;margin-bottom:8px">📊 ${escHtml(m.full_name)}</div>`;
   if (profileEl) { profileEl.style.display = 'block'; currentProfileMemberId = memberId; }
   await renderAttendanceProfile(memberId, 'spotlightProfile');
 }
@@ -6793,8 +6789,8 @@ function renderGroupMemberPicker() {
     <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;cursor:pointer;border-bottom:1px solid var(--border)">
       <input type="checkbox" value="${m.id}" ${selectedGroupMembers.has(m.id)?'checked':''} onchange="toggleGroupMember('${m.id}',this.checked)" style="cursor:pointer;accent-color:var(--navy)">
       <div>
-        <div style="font-size:0.84rem;font-weight:500">${m.full_name}</div>
-        <div style="font-size:0.7rem;color:var(--muted)">${m.department||'No dept'}</div>
+        <div style="font-size:0.84rem;font-weight:500">${escHtml(m.full_name)}</div>
+        <div style="font-size:0.7rem;color:var(--muted)">${escHtml(m.department||'No dept')}</div>
       </div>
     </label>`).join('');
 }
